@@ -62,3 +62,22 @@ def results_dir(cfg: dict) -> Path:
     d = Path(cfg["experiment"].get("results_dir", "results")) / cfg["experiment"]["full_name"]
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def generated_dir(cfg: dict) -> Path:
+    """Teacher-written artifacts (gitignored; not published until provider terms are checked)."""
+    d = Path(cfg["data"].get("generated_dir", "data/generated")) / cfg["experiment"]["full_name"]
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def config_snapshot(cfg: dict) -> dict:
+    """Full resolved config for the result JSON, with anything key/secret-like removed."""
+    def scrub(v):
+        if isinstance(v, dict):
+            return {k: scrub(x) for k, x in v.items()
+                    if not any(s in k.lower() for s in ("key", "secret", "password"))}
+        if isinstance(v, list):
+            return [scrub(x) for x in v]
+        return v
+    return scrub(copy.deepcopy(cfg))

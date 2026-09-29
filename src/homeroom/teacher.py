@@ -84,7 +84,10 @@ class MockTeacher(BaseTeacher):
         rng = random.Random(hashlib.sha256(prompt.encode()).hexdigest())
         n = meta.get("n", 5)
         if task == "exam":
-            out = {"items": self._variants(meta.get("seeds", []), n, rng)}
+            # Short fragments of seeds: hard enough that dry runs exercise diagnosis + remediation.
+            frags = [" ".join(s.split()[i:i + 2]) for s in meta.get("seeds", [])
+                     for i in range(0, max(1, len(s.split()) - 1), 2)]
+            out = {"items": [f"{rng.choice(self._PRE)}{rng.choice(frags or ['help me'])}" for _ in range(n)]}
         elif task == "lesson":
             out = {"definition": f"messages about {meta['intent']}", "confusable_with": [],
                    "examples": self._variants(meta.get("seeds", []), n, rng)}

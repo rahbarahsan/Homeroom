@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from .arms import ARM_ORDER, ARMS, ArmContext
-from .config import load_config, results_dir
+from .config import config_snapshot, load_config, results_dir
 from .data import load_task, sample_k_shot
 
 
@@ -18,6 +18,14 @@ def _git_commit() -> str | None:
     try:
         return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True,
                                        stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        return None
+
+
+def _git_dirty() -> bool | None:
+    try:
+        return bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"],
+                                            text=True, stderr=subprocess.DEVNULL).strip())
     except Exception:
         return None
 
@@ -44,13 +52,15 @@ def cmd_run(args) -> None:
             kwargs = {}
             if arm == "bulk" and cfg.get("bulk", {}).get("match_classroom_spend", True):
                 cpath = out / f"classroom_seed{seed}.json"
-                if cpath.exists():
-                    kwargs["spend_cap"] = json.loads(cpath.read_text())["cost"]["spent_usd"]
+                if not cpath.exists():
+                    raise SystemExit(
+                        f"bulk seed={seed}: match_classroom_spend is on but {cpath} does not exist. "
+                        "Run the classroom arm for this seed first (or set bulk.match_classroom_spend: false).")
+                kwargs["spend_cap"] = json.loads(cpath.read_text())["cost"]["spent_usd"]
             print(f"  running {arm} seed={seed} ...", flush=True)
             res = ARMS[arm](ctx, **kwargs)
             res.update({"experiment": cfg["experiment"]["full_name"], "git_commit": _git_commit(),
-                        "student": cfg["student"], "teacher": {k2: v for k2, v in cfg["teacher"].items()
-                                                               if "key" not in k2.lower()}})
+                        "git_dirty": _git_dirty(), "config": config_snapshot(cfg)})
             path.write_text(json.dumps(res, indent=2), encoding="utf-8")
             t = res["test"]
             print(f"    -> acc={t['accuracy']:.4f} macroF1={t['macro_f1']:.4f} ece={t['ece']:.3f} "
@@ -113,6 +123,10 @@ def cmd_check_gpu(_args) -> None:
 
 
 def main(argv=None) -> None:
+    # Windows falls back to cp1252 when stdout is redirected; summaries contain ± and Δ.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(prog="homeroom")
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run", help="run experiment arms")

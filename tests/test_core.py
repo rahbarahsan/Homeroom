@@ -77,3 +77,26 @@ def test_toy_end_to_end(tmp_path, monkeypatch):
     assert cls["cost"]["spent_usd"] <= 0.2 + 1e-9
     assert bulk["spend_cap_usd"] == cls["cost"]["spent_usd"]      # spend matching
     assert (out / "summary.md").exists()
+    # teacher text stays out of committed results; it goes to gitignored data/generated/
+    assert len(cls["history"]) >= 2 and cls["cost"]["by_tag_usd"].get("remedial", 0) > 0  # loop ran
+    assert "rules" not in cls and "n_rules" in cls
+    assert (tmp_path / "data" / "generated" / "toy_smoke" / "classroom_rules_seed0.json").exists()
+    # full config snapshot is recorded
+    assert cls["config"]["classroom"]["max_rounds"] == 2 and cls["config"]["budget"]["usd_per_arm"] == 0.2
+
+
+def test_bulk_refuses_without_classroom_result(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    import shutil, pathlib
+    root = pathlib.Path(__file__).resolve().parents[1]
+    shutil.copy(root / "configs" / "toy_smoke.yaml", tmp_path / "toy.yaml")
+    from homeroom.run import main
+    with pytest.raises(SystemExit, match="classroom"):
+        main(["run", "--config", "toy.yaml", "--arms", "bulk"])
+
+
+def test_config_snapshot_scrubs_secrets():
+    from homeroom.config import config_snapshot
+    snap = config_snapshot({"teacher": {"model": "m", "api_key": "sk-x", "max_tokens": 5},
+                            "other": [{"secret_thing": 1, "ok": 2}]})
+    assert snap == {"teacher": {"model": "m", "max_tokens": 5}, "other": [{"ok": 2}]}

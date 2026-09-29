@@ -4,6 +4,7 @@ Final evaluation on the official test set happens ONLY in `final_eval`.
 """
 from __future__ import annotations
 
+import json
 import re
 import time
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ import pandas as pd
 
 from . import prompts as P
 from .budget import Budget, BudgetExceeded
+from .config import generated_dir
 from .data import TaskData
 from .evaluate import compute_metrics, top_confusions
 from .students import free_gpu, make_student
@@ -223,10 +225,13 @@ def run_classroom(ctx: ArmContext) -> dict:
             stopped_by = "budget"
             # loop continues once more: retrain on what we have, then stop
 
+    # Rules are teacher-written text: keep them out of the committed result JSON (hard rules 5/6).
+    rules_path = generated_dir(ctx.cfg) / f"classroom_rules_seed{ctx.seed}.json"
+    rules_path.write_text(json.dumps(rules, indent=2), encoding="utf-8")
     return _result(ctx, "classroom", best["student"], best["n_train"], budget=sess.budget, t0=t0,
                    extra={"stopped_by": stopped_by, "best_round": best["round"], "history": history,
                           "exam_sizes": {"diagnostic": len(diag), "score": len(score)},
-                          "n_generated": best["n_train"] - len(ctx.seeds_df), "rules": rules[:50]})
+                          "n_generated": best["n_train"] - len(ctx.seeds_df), "n_rules": len(rules)})
 
 
 ARMS = {"real_fewshot": run_real_fewshot, "full_data": run_full_data,
