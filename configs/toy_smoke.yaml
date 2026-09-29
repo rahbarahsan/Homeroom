@@ -1,0 +1,11 @@
+# Offline smoke test: tiny built-in dataset, mock teacher, tf-idf student. Runs in seconds.
+experiment: {name: toy_smoke, seeds: [0], results_dir: results}
+data: {dataset: toy, k_shot: 3, teacher_cache_dir: data/cache}
+teacher: {provider: mock, model: mock, price_input_per_mtok: 1.0, price_output_per_mtok: 5.0,
+          temperature: 0.9, max_tokens: 512}
+budget: {usd_per_arm: 0.2}
+arms: [real_fewshot, full_data, classroom, bulk]
+bulk: {examples_per_call: 5, max_examples_per_intent: 20, match_classroom_spend: true}
+classroom: {exam_items_per_intent: 4, lesson_examples_per_intent: 5, max_rounds: 2,
+            confusions_per_round: 3, examples_per_confusion: 4, stop_if_score_gain_below: 0.0}
+student: {kind: tfidf, tfidf: {C: 10.0}}

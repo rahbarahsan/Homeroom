@@ -1,0 +1,22 @@
+# secrets
+.env
+.env.*
+!.env.example
+# data: raw downloads, teacher outputs (do NOT publish until provider terms are checked)
+data/*
+!data/.gitkeep
+# ledgers may reveal usage patterns; results JSON are fine to commit
+results/**/ledgers/
+results/*_dryrun/
+results/toy_smoke/
+# python / tooling
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+wandb/
+outputs/
+checkpoints/
+*.safetensors
+*.bin

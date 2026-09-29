@@ -1,0 +1,56 @@
+# Phase 1 pilot: does closed-loop teaching beat real few-shot and bulk synthetic data at equal spend?
+# Changing any prompt or teacher => change experiment.name.
+experiment:
+  name: pilot_banking77_v1
+  seeds: [0, 1, 2]
+  results_dir: results
+
+data:
+  dataset: banking77          # banking77 | toy
+  cache_dir: data/raw
+  teacher_cache_dir: data/cache
+  k_shot: 10                  # real examples per intent the student starts with (baseline ≈ 88% with SetFit)
+
+teacher:
+  provider: ${TEACHER_PROVIDER:-openai_compatible}   # openai_compatible | anthropic | mock
+  model: ${TEACHER_MODEL}
+  base_url: ${TEACHER_BASE_URL}
+  price_input_per_mtok: ${TEACHER_PRICE_IN:-0}       # USD per 1M input tokens  (REQUIRED for paid runs)
+  price_output_per_mtok: ${TEACHER_PRICE_OUT:-0}     # USD per 1M output tokens (REQUIRED for paid runs)
+  temperature: 0.9
+  max_tokens: 2048
+
+budget:
+  usd_per_arm: 5.0            # hard cap per arm per seed; start with 1.0 for the cost-accounting check
+
+arms: [real_fewshot, classroom, bulk]   # add full_data for the oracle upper bound (slow with SetFit)
+
+bulk:
+  examples_per_call: 20
+  max_examples_per_intent: 200
+  match_classroom_spend: true # bulk spend cap = classroom's actual spend for the same seed (fair comparison)
+
+classroom:
+  exam_items_per_intent: 6    # half diagnostic (teacher sees mistakes), half score (stopping signal)
+  lesson_examples_per_intent: 10
+  max_rounds: 4
+  confusions_per_round: 15
+  examples_per_confusion: 8
+  stop_if_score_gain_below: 0.002
+
+student:
+  kind: setfit                # tfidf (smoke test) | setfit (primary) | hf_classifier
+  setfit:
+    model: sentence-transformers/all-mpnet-base-v2   # same family as the published baselines
+    batch_size: 16
+    num_epochs: 1
+    num_iterations: 20
+    max_steps: 2000           # caps training time when synthetic data grows
+  hf_classifier:
+    model: answerdotai/ModernBERT-base
+    epochs: 5
+    lr: 5.0e-5
+    batch_size: 32
+    max_length: 64
+  tfidf:
+    C: 10.0
