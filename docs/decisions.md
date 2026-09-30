@@ -90,7 +90,29 @@ Setup: native Windows, torch 2.11+cu128, setfit 1.2.0, transformers 5.17, senten
     real seed examples (PIN-related) — label semantics come from the seeds, as intended.
 - 2026-09-30 — Go threshold confirmed by the human: classroom ≥ **88.2%** (measured k=20 reference,
   as-is with the step cap), ≤ ~$10, and beats bulk at matched spend. CLAUDE.md updated.
-- Open: to test the actual loop, the budget must cover exam + lessons + ≥1 remedial round (≈ $1.2+
+- 2026-09-30 — Option 1 chosen by the human: `pilot_banking77_v2_subagent_usd3`, $3 per arm,
+  `max_tokens` 1024 (smaller worst-case reserve → bigger waves, smaller bulk underspend).
+  Its teacher cache was seeded with the 280 replies of the $1 cost check: same teacher, prompts
+  and salts (cache keys identical), largest reply ≈ 421 tokens so the lower `max_tokens` would not
+  have changed any of them. Reused replies are charged at their original estimated cost.
+- $3 result, `pilot_banking77_v2_subagent_usd3`, seed 0 (ESTIMATED spend):
+
+  | Arm | Test acc | Macro-F1 | ECE | Spend | n_train | Teacher calls |
+  |---|---|---|---|---|---|---|
+  | real_fewshot | 0.8373 | 0.836 | 0.037 | $0 | 770 | 0 |
+  | classroom | 0.8695 | 0.869 | **0.030** | $1.1134 | 1,539 | 77 exam $0.358 + 77 lesson $0.641 + 15 remedial $0.115 |
+  | bulk | 0.8695 | 0.869 | 0.045 | $1.0990 | 3,825 | 155 bulk $1.099 |
+
+  - Classroom used $1.11 of $3: one remedial round (15 confusion pairs) did not raise score-half
+    exam accuracy by ≥ 0.2 pt → `no_improvement`, round-0 student kept (n_train 1,539 = round 0).
+    So remediation was tried once and rejected by the stopping rule; its data never reached the
+    final student.
+  - Tie on accuracy and macro-F1 (to 4 decimals; ECE differs, so different models). Classroom
+    matched bulk with 40% of the training examples and better calibration.
+  - Neither reaches 88.2. One seed → no conclusion. Bulk underspend now $0.014 (max_tokens 1024).
+  - Stopping signal is coarse: score half = 3 items/intent = 231 items, one item = 0.43 pt, larger
+    than the 0.2 pt min gain → stopping is dominated by noise (see open item on exam size).
+- Open (addressed by the $3 run): to test the actual loop, the budget must cover exam + lessons + ≥1 remedial round (≈ $1.2+
   at Opus 5.5 rates) — or make the exam cheaper (fewer items / smaller model) or lessons richer.
 
 ## Open items

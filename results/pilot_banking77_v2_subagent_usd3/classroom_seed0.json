@@ -1,0 +1,123 @@
+{
+  "arm": "classroom",
+  "seed": 0,
+  "k_shot": 10,
+  "n_train": 1539,
+  "test": {
+    "n": 3080,
+    "accuracy": 0.8694805194805195,
+    "macro_f1": 0.8689817161145182,
+    "ece": 0.030207209003629623,
+    "nll": 0.5551374033528684
+  },
+  "cost": {
+    "limit_usd": 3.0,
+    "spent_usd": 1.113444,
+    "real_spent_usd": 0.149664,
+    "calls": 169,
+    "cached_calls": 150,
+    "input_tokens": 120641,
+    "output_tokens": 31544,
+    "by_tag_usd": {
+      "exam": 0.357612,
+      "lesson": 0.64088,
+      "remedial": 0.114952
+    }
+  },
+  "runtime_s": 1239.0,
+  "stopped_by": "no_improvement",
+  "best_round": 0,
+  "history": [
+    {
+      "round": 0,
+      "n_train": 1539,
+      "score_acc": 0.9567,
+      "diag_acc": 0.9304,
+      "spent_usd": 0.998492
+    },
+    {
+      "round": 1,
+      "n_train": 1773,
+      "score_acc": 0.9567,
+      "diag_acc": 0.9522,
+      "spent_usd": 1.113444
+    }
+  ],
+  "exam_sizes": {
+    "diagnostic": 230,
+    "score": 231
+  },
+  "n_generated": 769,
+  "n_rules": 15,
+  "experiment": "pilot_banking77_v2_subagent_usd3",
+  "git_commit": "87164cd",
+  "git_dirty": true,
+  "config": {
+    "experiment": {
+      "name": "pilot_banking77_v2_subagent_usd3",
+      "seeds": [
+        0
+      ],
+      "results_dir": "results",
+      "full_name": "pilot_banking77_v2_subagent_usd3"
+    },
+    "data": {
+      "dataset": "banking77",
+      "cache_dir": "data/raw",
+      "teacher_cache_dir": "data/cache",
+      "k_shot": 10
+    },
+    "teacher": {
+      "provider": "queue",
+      "model": "claude-opus-5-5",
+      "price_input_per_mtok": 4.0,
+      "price_output_per_mtok": 20.0,
+      "temperature": null,
+      "max_tokens": 1024,
+      "queue_timeout_s": 21600
+    },
+    "budget": {
+      "usd_per_arm": 3.0
+    },
+    "arms": [
+      "real_fewshot",
+      "classroom",
+      "bulk"
+    ],
+    "bulk": {
+      "examples_per_call": 20,
+      "max_examples_per_intent": 200,
+      "match_classroom_spend": true
+    },
+    "classroom": {
+      "exam_items_per_intent": 6,
+      "lesson_examples_per_intent": 10,
+      "max_rounds": 4,
+      "confusions_per_round": 15,
+      "examples_per_confusion": 8,
+      "stop_if_score_gain_below": 0.002
+    },
+    "student": {
+      "kind": "setfit",
+      "setfit": {
+        "model": "sentence-transformers/all-mpnet-base-v2",
+        "batch_size": 16,
+        "num_epochs": 1,
+        "num_iterations": 20,
+        "max_steps": 2000,
+        "head_C": 100.0,
+        "head_max_iter": 1000
+      },
+      "hf_classifier": {
+        "model": "answerdotai/ModernBERT-base",
+        "epochs": 5,
+        "lr": 5e-05,
+        "batch_size": 32,
+        "max_length": 64
+      },
+      "tfidf": {
+        "C": 10.0
+      }
+    }
+  }
+}
