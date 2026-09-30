@@ -1,8 +1,9 @@
-# Phase 1 pilot: does closed-loop teaching beat real few-shot and bulk synthetic data at equal spend?
-# Changing any prompt or teacher => change experiment.name.
+# Milestone 3 cost check, teacher = external subagent via the queue provider. Spend is an
+# ESTIMATE (chars/4 tokens, no thinking tokens) priced at Claude Opus 5.5 API rates.
+# Not comparable to API-billed runs. See docs/decisions.md.
 experiment:
-  name: pilot_banking77_v2   # v2: setfit head C=100 (chosen on dev split; see docs/decisions.md)
-  seeds: [0, 1, 2]
+  name: pilot_banking77_v2_subagent_costcheck
+  seeds: [0]
   results_dir: results
 
 data:
@@ -12,16 +13,16 @@ data:
   k_shot: 10                  # real examples per intent the student starts with (baseline ≈ 88% with SetFit)
 
 teacher:
-  provider: ${TEACHER_PROVIDER:-openai_compatible}   # openai_compatible | anthropic | mock
-  model: ${TEACHER_MODEL}
-  base_url: ${TEACHER_BASE_URL}
-  price_input_per_mtok: ${TEACHER_PRICE_IN:-0}       # USD per 1M input tokens  (REQUIRED for paid runs)
-  price_output_per_mtok: ${TEACHER_PRICE_OUT:-0}     # USD per 1M output tokens (REQUIRED for paid runs)
-  temperature: 0.9
-  max_tokens: 2048
+  provider: queue             # answered by the homeroom-teacher subagent
+  model: claude-opus-5-5      # model the subagent runs on (label; part of the cache key)
+  price_input_per_mtok: 4.0   # Claude Opus 5.5 API list price, USD / 1M input tokens
+  price_output_per_mtok: 20.0 # USD / 1M output tokens
+  temperature: null           # Opus 5.5 rejects sampling params; subagent can't set them anyway
+  max_tokens: 2048            # worst-case output reserved per request by the budget pre-check
+  queue_timeout_s: 21600
 
 budget:
-  usd_per_arm: 5.0            # hard cap per arm per seed; start with 1.0 for the cost-accounting check
+  usd_per_arm: 1.0
 
 arms: [real_fewshot, classroom, bulk]   # add full_data for the oracle upper bound (slow with SetFit)
 

@@ -100,3 +100,62 @@ def test_config_snapshot_scrubs_secrets():
     snap = config_snapshot({"teacher": {"model": "m", "api_key": "sk-x", "max_tokens": 5},
                             "other": [{"secret_thing": 1, "ok": 2}]})
     assert snap == {"teacher": {"model": "m", "max_tokens": 5}, "other": [{"ok": 2}]}
+
+
+def _answer_queue(qdir, stop, text='{"examples": ["ok"]}'):
+    """Fake subagent: answers every pending request via a batch reply file."""
+    import time as _t
+    from pathlib import Path as _P
+    bdir = _P(qdir) / "batches"
+    bdir.mkdir(parents=True, exist_ok=True)
+    n = 0
+    while not stop.is_set():
+        ids = [p.name[:-len(".req.json")] for p in _P(qdir).glob("*.req.json")
+               if not (_P(qdir) / p.name.replace(".req.", ".reply.")).exists()]
+        if ids:
+            n += 1
+            (bdir / f"b{n:04d}.reply.json").write_text(json.dumps({i: text for i in ids}))
+        _t.sleep(0.05)
+
+
+def test_queue_teacher_batches_and_caches(tmp_path):
+    import threading
+    from homeroom.teacher import QueueTeacher, Request
+    qdir = tmp_path / "q"
+    t = QueueTeacher("m", qdir, timeout_s=10, poll_s=0.02, max_tokens=100)
+    stop = threading.Event()
+    th = threading.Thread(target=_answer_queue, args=(qdir, stop), daemon=True); th.start()
+    try:
+        s = TeacherSession(t, Budget(10.0, 1.0, 5.0), tmp_path / "cache")
+        reqs = [Request("sys", f"prompt {i}", "bulk", salt=str(i)) for i in range(5)]
+        replies, stopped = s.ask_many(reqs)
+        assert not stopped and len(replies) == 5 and all(r.text == '{"examples": ["ok"]}' for r in replies)
+        assert len(list(qdir.glob("*.req.json"))) == 5 and s.budget.calls == 5
+        s2 = TeacherSession(t, Budget(10.0, 1.0, 5.0), tmp_path / "cache")   # rerun: all cache hits
+        replies2, _ = s2.ask_many(reqs)
+        assert all(r.cached for r in replies2) and s2.budget.real_spent == 0
+        assert abs(s2.budget.spent - s.budget.spent) < 1e-12
+    finally:
+        stop.set(); th.join()
+
+
+def test_queue_waves_respect_hard_cap(tmp_path):
+    import threading
+    from homeroom.teacher import QueueTeacher, Request
+    qdir = tmp_path / "q"
+    # worst case per request: 100 output tokens * $5/MTok = $0.0005 (+ tiny input) -> cap fits ~3
+    t = QueueTeacher("m", qdir, timeout_s=10, poll_s=0.02, max_tokens=100)
+    stop = threading.Event()
+    th = threading.Thread(target=_answer_queue, args=(qdir, stop), daemon=True); th.start()
+    try:
+        s = TeacherSession(t, Budget(0.0016, 1.0, 5.0), tmp_path / "cache")
+        replies, stopped = s.ask_many([Request("sys", f"p{i}", "bulk", salt=str(i)) for i in range(50)])
+        assert stopped and 0 < len(replies) < 50
+        assert s.budget.spent <= s.budget.limit_usd
+    finally:
+        stop.set(); th.join()
+
+
+def test_null_temperature_is_not_sent():
+    t = make_teacher({"teacher": {"provider": "mock", "temperature": None}, "experiment": {"full_name": "x"}})
+    assert t.temperature is None

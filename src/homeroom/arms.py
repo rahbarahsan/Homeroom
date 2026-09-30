@@ -14,12 +14,12 @@ import numpy as np
 import pandas as pd
 
 from . import prompts as P
-from .budget import Budget, BudgetExceeded
+from .budget import Budget
 from .config import generated_dir
 from .data import TaskData
 from .evaluate import compute_metrics, top_confusions
 from .students import free_gpu, make_student
-from .teacher import TeacherSession, make_teacher
+from .teacher import Request, TeacherSession, make_teacher
 
 
 def norm(text: str) -> str:
@@ -92,27 +92,31 @@ def run_bulk(ctx: ArmContext, spend_cap: float | None = None) -> dict:
     seen = {norm(t) for t in texts}
     counts = {i: 0 for i in range(len(labels))}
     stopped_by, call_i, empty_passes = "cap_per_intent", 0, 0
-    try:
-        while any(c < max_per_intent for c in counts.values()) and empty_passes < 3:
-            added_this_pass = 0
-            for li, intent in enumerate(labels):
-                if counts[li] >= max_per_intent:
-                    continue
-                seeds = ctx.seeds_for(li)
-                r = sess.ask(P.SYSTEM, P.bulk_prompt(ctx.task.description, intent, seeds, n_per_call),
-                             task="bulk", meta={"intent": intent, "seeds": seeds, "n": n_per_call},
-                             salt=f"seed={ctx.seed}|bulk|{intent}|{call_i}")
-                call_i += 1
-                try:
-                    new = P.clean_examples(P.parse_json(r.text).get("examples"))
-                except ValueError:
-                    continue
-                for t in new:
-                    if counts[li] < max_per_intent and norm(t) not in seen:
-                        seen.add(norm(t)); texts.append(t); ys.append(li); counts[li] += 1; added_this_pass += 1
-            empty_passes = empty_passes + 1 if added_this_pass == 0 else 0
-    except BudgetExceeded:
-        stopped_by = "budget"
+    while any(c < max_per_intent for c in counts.values()) and empty_passes < 3:
+        added_this_pass = 0
+        batch, batch_labels = [], []
+        for li, intent in enumerate(labels):
+            if counts[li] >= max_per_intent:
+                continue
+            seeds = ctx.seeds_for(li)
+            batch.append(Request(P.SYSTEM, P.bulk_prompt(ctx.task.description, intent, seeds, n_per_call),
+                                 "bulk", {"intent": intent, "seeds": seeds, "n": n_per_call},
+                                 f"seed={ctx.seed}|bulk|{intent}|{call_i}"))
+            batch_labels.append(li)
+            call_i += 1
+        replies, budget_stopped = sess.ask_many(batch)
+        for li, r in zip(batch_labels, replies):
+            try:
+                new = P.clean_examples(P.parse_json(r.text).get("examples"))
+            except ValueError:
+                continue
+            for t in new:
+                if counts[li] < max_per_intent and norm(t) not in seen:
+                    seen.add(norm(t)); texts.append(t); ys.append(li); counts[li] += 1; added_this_pass += 1
+        if budget_stopped:
+            stopped_by = "budget"
+            break
+        empty_passes = empty_passes + 1 if added_this_pass == 0 else 0
     s = ctx.train(texts, ys)
     return _result(ctx, "bulk", s, len(texts), budget=sess.budget, t0=t0,
                    extra={"stopped_by": stopped_by, "n_generated": len(texts) - len(ctx.seeds_df),
@@ -143,39 +147,43 @@ def run_classroom(ctx: ArmContext) -> dict:
         return n
 
     best = {"acc": -1.0, "student": None, "n_train": 0, "round": -1}
-    try:
-        # 1) Exam, written BEFORE lessons; split into diagnostic (shown to teacher) and score halves.
-        n_exam = int(cc.get("exam_items_per_intent", 6))
-        for li, intent in enumerate(labels):
-            r = sess.ask(P.SYSTEM, P.exam_prompt(task.description, intent, labels, n_exam), task="exam",
-                         meta={"intent": intent, "seeds": ctx.seeds_for(li), "n": n_exam},
-                         salt=f"seed={ctx.seed}|exam|{intent}")
-            try:
-                items = P.clean_examples(P.parse_json(r.text).get("items"))
-            except ValueError:
-                items = []
-            items = [t for t in items if norm(t) not in seen]
-            rng.shuffle(items)
-            half = len(items) // 2
-            diag += [(t, li) for t in items[:half]]
-            score += [(t, li) for t in items[half:]]
-        seen |= {norm(t) for t, _ in diag + score}  # never train on exam items
+    # 1) Exam, written BEFORE lessons; split into diagnostic (shown to teacher) and score halves.
+    n_exam = int(cc.get("exam_items_per_intent", 6))
+    replies, budget_stopped = sess.ask_many([
+        Request(P.SYSTEM, P.exam_prompt(task.description, intent, labels, n_exam), "exam",
+                {"intent": intent, "seeds": ctx.seeds_for(li), "n": n_exam}, f"seed={ctx.seed}|exam|{intent}")
+        for li, intent in enumerate(labels)])
+    for li, r in enumerate(replies):
+        try:
+            items = P.clean_examples(P.parse_json(r.text).get("items"))
+        except ValueError:
+            items = []
+        items = [t for t in items if norm(t) not in seen]
+        rng.shuffle(items)
+        half = len(items) // 2
+        diag += [(t, li) for t in items[:half]]
+        score += [(t, li) for t in items[half:]]
+    seen |= {norm(t) for t, _ in diag + score}  # never train on exam items
 
-        # 2) Lessons: definition + confusables + examples per intent.
+    # 2) Lessons: definition + confusables + examples per intent.
+    if budget_stopped:
+        stopped_by = "budget"
+    else:
         n_lesson = int(cc.get("lesson_examples_per_intent", 10))
-        for li, intent in enumerate(labels):
-            seeds = ctx.seeds_for(li)
-            r = sess.ask(P.SYSTEM, P.lesson_prompt(task.description, intent, labels, seeds, n_lesson),
-                         task="lesson", meta={"intent": intent, "seeds": seeds, "n": n_lesson},
-                         salt=f"seed={ctx.seed}|lesson|{intent}")
+        replies, budget_stopped = sess.ask_many([
+            Request(P.SYSTEM, P.lesson_prompt(task.description, intent, labels, ctx.seeds_for(li), n_lesson),
+                    "lesson", {"intent": intent, "seeds": ctx.seeds_for(li), "n": n_lesson},
+                    f"seed={ctx.seed}|lesson|{intent}")
+            for li, intent in enumerate(labels)])
+        for li, r in enumerate(replies):
             try:
                 d = P.parse_json(r.text)
                 definitions[li] = str(d.get("definition", ""))
                 add(P.clean_examples(d.get("examples")), li)
             except ValueError:
                 pass
-    except BudgetExceeded:
-        stopped_by = "budget"
+        if budget_stopped:
+            stopped_by = "budget"
 
     # 3) Rounds: train -> exam -> diagnose -> remediate.
     max_rounds = int(cc.get("max_rounds", 4))
@@ -205,23 +213,24 @@ def run_classroom(ctx: ArmContext) -> dict:
         if not confusions:
             stopped_by = "no_confusions"
             break
-        try:
-            for a, b, _ in confusions:
-                mistakes = [t for t, y, p in zip(d_texts, d_y, d_pred) if y == a and p == b]
-                r = sess.ask(P.SYSTEM, P.remedial_prompt(task.description, labels[a], labels[b],
-                                                         definitions.get(a, ""), definitions.get(b, ""),
-                                                         mistakes, n_rem),
-                             task="remedial", meta={"seeds_a": ctx.seeds_for(a), "seeds_b": ctx.seeds_for(b),
-                                                    "n": n_rem},
-                             salt=f"seed={ctx.seed}|remedial|r{rnd}|{a}|{b}")
-                try:
-                    d = P.parse_json(r.text)
-                except ValueError:
-                    continue
-                rules.append({"round": rnd, "a": labels[a], "b": labels[b], "rule": d.get("rule")})
-                add(P.clean_examples(d.get("a_examples")), a)
-                add(P.clean_examples(d.get("b_examples")), b)
-        except BudgetExceeded:
+        reqs = []
+        for a, b, _ in confusions:
+            mistakes = [t for t, y, p in zip(d_texts, d_y, d_pred) if y == a and p == b]
+            reqs.append(Request(P.SYSTEM, P.remedial_prompt(task.description, labels[a], labels[b],
+                                                            definitions.get(a, ""), definitions.get(b, ""),
+                                                            mistakes, n_rem),
+                                "remedial", {"seeds_a": ctx.seeds_for(a), "seeds_b": ctx.seeds_for(b), "n": n_rem},
+                                f"seed={ctx.seed}|remedial|r{rnd}|{a}|{b}"))
+        replies, budget_stopped = sess.ask_many(reqs)
+        for (a, b, _), r in zip(confusions, replies):
+            try:
+                d = P.parse_json(r.text)
+            except ValueError:
+                continue
+            rules.append({"round": rnd, "a": labels[a], "b": labels[b], "rule": d.get("rule")})
+            add(P.clean_examples(d.get("a_examples")), a)
+            add(P.clean_examples(d.get("b_examples")), b)
+        if budget_stopped:
             stopped_by = "budget"
             # loop continues once more: retrain on what we have, then stop
 

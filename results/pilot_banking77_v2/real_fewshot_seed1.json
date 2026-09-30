@@ -1,0 +1,91 @@
+{
+  "arm": "real_fewshot",
+  "seed": 1,
+  "k_shot": 10,
+  "n_train": 770,
+  "test": {
+    "n": 3080,
+    "accuracy": 0.8477272727272728,
+    "macro_f1": 0.8479005545798657,
+    "ece": 0.027466532246923282,
+    "nll": 0.6319753776035423
+  },
+  "cost": {
+    "spent_usd": 0.0,
+    "real_spent_usd": 0.0
+  },
+  "runtime_s": 447.6,
+  "experiment": "pilot_banking77_v2",
+  "git_commit": "2a5637d",
+  "git_dirty": true,
+  "config": {
+    "experiment": {
+      "name": "pilot_banking77_v2",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "results_dir": "results",
+      "full_name": "pilot_banking77_v2"
+    },
+    "data": {
+      "dataset": "banking77",
+      "cache_dir": "data/raw",
+      "teacher_cache_dir": "data/cache",
+      "k_shot": 10
+    },
+    "teacher": {
+      "provider": "openai_compatible",
+      "model": "",
+      "base_url": "",
+      "price_input_per_mtok": "0",
+      "price_output_per_mtok": "0",
+      "temperature": 0.9,
+      "max_tokens": 2048
+    },
+    "budget": {
+      "usd_per_arm": 5.0
+    },
+    "arms": [
+      "real_fewshot",
+      "classroom",
+      "bulk"
+    ],
+    "bulk": {
+      "examples_per_call": 20,
+      "max_examples_per_intent": 200,
+      "match_classroom_spend": true
+    },
+    "classroom": {
+      "exam_items_per_intent": 6,
+      "lesson_examples_per_intent": 10,
+      "max_rounds": 4,
+      "confusions_per_round": 15,
+      "examples_per_confusion": 8,
+      "stop_if_score_gain_below": 0.002
+    },
+    "student": {
+      "kind": "setfit",
+      "setfit": {
+        "model": "sentence-transformers/all-mpnet-base-v2",
+        "batch_size": 16,
+        "num_epochs": 1,
+        "num_iterations": 20,
+        "max_steps": 2000,
+        "head_C": 100.0,
+        "head_max_iter": 1000
+      },
+      "hf_classifier": {
+        "model": "answerdotai/ModernBERT-base",
+        "epochs": 5,
+        "lr": 5e-05,
+        "batch_size": 32,
+        "max_length": 64
+      },
+      "tfidf": {
+        "C": 10.0
+      }
+    }
+  }
+}

@@ -34,8 +34,10 @@ Arms (same teacher budget cap, 3 seeds each):
 Published reference numbers (Loukas et al. 2023, SetFit + all-mpnet-base-v2):
 10-shot 88.0 acc, 20-shot 91.2, full data 94.0. GPT-4 3-shot in-context: 83.1.
 
-**Go** if `classroom` reaches ≥ 91% test accuracy (the 20-real-shot level) from k=10 for ≤ ~$10
-AND beats `bulk` at matched spend across 3 seeds. **No-go** → write a short negative-results post.
+**Go** if `classroom` reaches ≥ 88.2% test accuracy (our *measured* 20-real-shot level,
+`configs/pilot_banking77_k20.yaml`; the published 91.2 was not reproducible with random draws — see
+`docs/decisions.md`) from k=10 for ≤ ~$10 AND beats `bulk` at matched spend across 3 seeds.
+Our measured k=10 baseline is 84.1 ± 0.5. **No-go** → write a short negative-results post.
 
 ### Milestones (do them in order)
 1. `homeroom run --dry-run` passes (mock teacher, tf-idf student, no GPU, no API cost).
