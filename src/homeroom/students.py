@@ -53,7 +53,11 @@ class SetFitStudent:
         from datasets import Dataset
         from setfit import SetFitModel, Trainer, TrainingArguments
 
-        self.model = SetFitModel.from_pretrained(self.cfg.get("model", "sentence-transformers/all-mpnet-base-v2"))
+        # setfit's default head is LogisticRegression(C=1): badly under-confident on unit-norm
+        # embeddings (docs/decisions.md, milestone 2). head_C is chosen on the dev split.
+        self.model = SetFitModel.from_pretrained(
+            self.cfg.get("model", "sentence-transformers/all-mpnet-base-v2"),
+            head_params={"C": float(self.cfg.get("head_C", 1.0)), "max_iter": int(self.cfg.get("head_max_iter", 1000))})
         args = TrainingArguments(**_filter_kwargs(TrainingArguments, {
             "batch_size": int(self.cfg.get("batch_size", 16)),
             "num_epochs": int(self.cfg.get("num_epochs", 1)),

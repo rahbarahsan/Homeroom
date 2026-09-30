@@ -1,0 +1,61 @@
+{
+  "arm": "real_fewshot",
+  "seed": 2,
+  "k_shot": 20,
+  "n_train": 1540,
+  "test": {
+    "n": 3080,
+    "accuracy": 0.8814935064935064,
+    "macro_f1": 0.8811249609551042,
+    "ece": 0.020821331804255376,
+    "nll": 0.47236776134004876
+  },
+  "cost": {
+    "spent_usd": 0.0,
+    "real_spent_usd": 0.0
+  },
+  "runtime_s": 430.0,
+  "experiment": "pilot_banking77_v2_k20",
+  "git_commit": "2a5637d",
+  "git_dirty": true,
+  "config": {
+    "experiment": {
+      "name": "pilot_banking77_v2_k20",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "results_dir": "results",
+      "full_name": "pilot_banking77_v2_k20"
+    },
+    "data": {
+      "dataset": "banking77",
+      "cache_dir": "data/raw",
+      "teacher_cache_dir": "data/cache",
+      "k_shot": 20
+    },
+    "teacher": {
+      "provider": "mock",
+      "model": "none"
+    },
+    "budget": {
+      "usd_per_arm": 0.0
+    },
+    "arms": [
+      "real_fewshot"
+    ],
+    "student": {
+      "kind": "setfit",
+      "setfit": {
+        "model": "sentence-transformers/all-mpnet-base-v2",
+        "batch_size": 16,
+        "num_epochs": 1,
+        "num_iterations": 20,
+        "max_steps": 2000,
+        "head_C": 100.0,
+        "head_max_iter": 1000
+      }
+    }
+  }
+}
