@@ -112,6 +112,43 @@ Setup: native Windows, torch 2.11+cu128, setfit 1.2.0, transformers 5.17, senten
   - Neither reaches 88.2. One seed → no conclusion. Bulk underspend now $0.014 (max_tokens 1024).
   - Stopping signal is coarse: score half = 3 items/intent = 231 items, one item = 0.43 pt, larger
     than the 0.2 pt min gain → stopping is dominated by noise (see open item on exam size).
+- 2026-09-30 — Stopping-signal fix chosen by the human (options a + c):
+  `pilot_banking77_v2_subagent_usd3_exam10_min2` = $3 run + `exam_items_per_intent: 10`
+  (5 score items/intent → 385 items, one item = 0.26 pt) + new `classroom.min_rounds: 2` (at least
+  two remedial rounds run before "no improvement" can stop the loop; the best-scoring round's
+  student is kept). `min_rounds` defaults to 0, so earlier configs behave as before. Cache seeded
+  from the $3 run (lesson and bulk prompts identical; exam prompts change with n, so exams are new).
+- exam10_min2 result, seed 0 (ESTIMATED spend):
+
+  | Arm | Test acc | Macro-F1 | ECE | Spend | n_train |
+  |---|---|---|---|---|---|
+  | real_fewshot | 0.8380 | 0.837 | 0.036 | $0 | 770 |
+  | classroom | **0.8721** | 0.871 | 0.043 | $1.4837 | 2,148 |
+  | bulk | 0.8711 | 0.871 | 0.048 | $1.4659 | 4,820 |
+
+  - The loop ran 4 remedial rounds (15 / 12 / 13 / 15 confusion pairs). It continued past the
+    2 forced rounds, so later rounds improved the score half; the kept student (n_train 2,148)
+    includes remedial data — the first run where remediation reached the final model.
+  - Classroom +0.10 pt over bulk with 45% of the training examples: within single-seed noise.
+    Neither reaches 88.2. Bulk underspend $0.018.
+  - Caveat: the exam/seed mismatch for `get_physical_card` (open item below) fed into remedial
+    material in this run (the teacher taught "how do I get a physical card" → get_physical_card).
+- examseeds result, seed 0 (ESTIMATED spend):
+
+  | Arm | Test acc | Macro-F1 | ECE | Spend | n_train |
+  |---|---|---|---|---|---|
+  | real_fewshot | 0.8373 | 0.836 | 0.037 | $0 | 770 |
+  | classroom | 0.8636 | 0.862 | 0.042 | $1.4735 | 2,029 |
+  | bulk | **0.8705** | 0.870 | 0.050 | $1.4659 | 4,820 |
+
+  - The fix worked as intended (all 10 `get_physical_card` exam items are PIN questions) and the
+    loop ran 4 remedial rounds (13 / 9 / 10 / 13 pairs), but classroom test accuracy fell
+    0.8721 → 0.8636 vs the previous run, and bulk (identical cached data, 0.8711 → 0.8705) wins.
+  - Candidate explanations (not separable with one seed): seed noise of the classroom pipeline;
+    an exam closer to the seeds is easier and gives a weaker diagnosis/stopping signal; the old
+    mismatched exam accidentally widened boundaries. Bulk run-to-run noise on identical data ≈ 0.1 pt.
+  - Seed-0 summary across all classroom variants: 0.856 / 0.870 / 0.872 / 0.864 vs bulk
+    0.871 / 0.870 / 0.871 / 0.871. No variant clearly beats bulk; seeds 1–2 are needed.
 - Open (addressed by the $3 run): to test the actual loop, the budget must cover exam + lessons + ≥1 remedial round (≈ $1.2+
   at Opus 5.5 rates) — or make the exam cheaper (fewer items / smaller model) or lessons richer.
 
@@ -126,4 +163,16 @@ Setup: native Windows, torch 2.11+cu128, setfit 1.2.0, transformers 5.17, senten
 - [ ] `bulk` underspends its matched cap by up to one worst-case call (pre-check reserves
       `max_tokens` output): dry run 0.227 vs 0.237 (−4%). Allow a final call sized to the remaining
       budget, or report the gap as-is?
+- [x] 2026-10-01 — Resolved (human-approved): `exam_prompt` now includes the k real seed examples
+      of the intent (from the per-seed k-shot sample, not hardcoded). New experiment
+      `pilot_banking77_v2_subagent_examseeds` (= exam10_min2 + this prompt change); cache seeded
+      from exam10_min2 (lesson/bulk prompts unchanged, exam re-asked). Trade-off: the exam is less
+      independent of the training seeds (may lean on their phrasing) but uses the dataset's label
+      meaning.
+- [ ] (original note) **Exam prompt has no seed examples** (found in the exam10_min2 run, 2026-09-30): the exam
+      writer sees only the intent *name*, so for `get_physical_card` it wrote "how do I get a
+      physical card" items, while the real seeds (and therefore lessons/bulk/student) are about the
+      card PIN. The student is then marked wrong on mislabeled exam items, which pollutes diagnosis
+      and the stopping score. Fix candidate: include the k real seeds in `exam_prompt` (seeds are
+      training data, so the test set stays untouched). Prompt change → new experiment name.
 - [ ] "Gap > 1 std" go criterion: population std (np.std, current) or sample std (ddof=1)?

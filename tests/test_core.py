@@ -159,3 +159,35 @@ def test_queue_waves_respect_hard_cap(tmp_path):
 def test_null_temperature_is_not_sent():
     t = make_teacher({"teacher": {"provider": "mock", "temperature": None}, "experiment": {"full_name": "x"}})
     assert t.temperature is None
+
+
+def test_min_rounds_keeps_teaching_and_keeps_best(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    import pathlib
+    import yaml
+    root = pathlib.Path(__file__).resolve().parents[1]
+    cfg = yaml.safe_load((root / "configs" / "toy_smoke.yaml").read_text())
+    cfg["experiment"]["name"] = "toy_min_rounds"
+    cfg["arms"] = ["classroom"]
+    # No round can ever "improve" by 1.0, so only min_rounds keeps the loop going.
+    cfg["classroom"].update(max_rounds=3, min_rounds=2, stop_if_score_gain_below=1.0)
+    (tmp_path / "toy.yaml").write_text(yaml.safe_dump(cfg))
+    # The toy exam is often solved after one round (-> "no_confusions"); pin one confusion
+    # pair so this test isolates the min_rounds logic.
+    import homeroom.arms as arms
+    monkeypatch.setattr(arms, "top_confusions", lambda y, p, k: [(0, 1, 1)])
+    from homeroom.run import main
+    main(["run", "--config", "toy.yaml", "--arms", "classroom"])
+    res = json.loads((tmp_path / "results" / "toy_min_rounds" / "classroom_seed0.json").read_text())
+    rounds = [h["round"] for h in res["history"]]
+    assert rounds == [0, 1, 2]                       # two remedial rounds ran despite no gain
+    assert [h["improved"] for h in res["history"]] == [True, False, False]
+    assert res["best_round"] == 0 and res["stopped_by"] == "no_improvement"
+    assert res["cost"]["by_tag_usd"].get("remedial", 0) > 0
+
+
+def test_exam_prompt_shows_real_examples():
+    from homeroom.prompts import exam_prompt
+    p = exam_prompt("task", "get_physical_card", ["get_physical_card", "order_physical_card"],
+                    ["where do I find the PIN for my card?"], 10)
+    assert "where do I find the PIN for my card?" in p and "10 realistic user messages" in p
