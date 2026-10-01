@@ -150,7 +150,7 @@ def run_classroom(ctx: ArmContext) -> dict:
     # 1) Exam, written BEFORE lessons; split into diagnostic (shown to teacher) and score halves.
     n_exam = int(cc.get("exam_items_per_intent", 6))
     replies, budget_stopped = sess.ask_many([
-        Request(P.SYSTEM, P.exam_prompt(task.description, intent, labels, n_exam), "exam",
+        Request(P.SYSTEM, P.exam_prompt(task.description, intent, labels, ctx.seeds_for(li), n_exam), "exam",
                 {"intent": intent, "seeds": ctx.seeds_for(li), "n": n_exam}, f"seed={ctx.seed}|exam|{intent}")
         for li, intent in enumerate(labels)])
     for li, r in enumerate(replies):
@@ -188,6 +188,7 @@ def run_classroom(ctx: ArmContext) -> dict:
     # 3) Rounds: train -> exam -> diagnose -> remediate.
     max_rounds = int(cc.get("max_rounds", 4))
     min_gain = float(cc.get("stop_if_score_gain_below", 0.002))
+    min_rounds = int(cc.get("min_rounds", 0))  # remedial rounds run before no-improvement can stop
     n_conf = int(cc.get("confusions_per_round", 15))
     n_rem = int(cc.get("examples_per_confusion", 8))
     d_texts, d_y = [t for t, _ in diag], np.array([y for _, y in diag], dtype=int)
@@ -201,12 +202,16 @@ def run_classroom(ctx: ArmContext) -> dict:
                         "diag_acc": round(float((d_pred == d_y).mean()), 4) if len(d_y) else None,
                         "spent_usd": round(sess.budget.spent, 6)})
         improved = s_acc > best["acc"] + (min_gain if rnd > 0 else -1)
+        history[-1]["improved"] = improved
         if improved:
             best.update(acc=s_acc, student=student, n_train=len(texts), round=rnd)
         else:
             del student; free_gpu()
-            stopped_by = "no_improvement"
-            break
+            # Before `min_rounds` remedial rounds have run, keep teaching from this round's
+            # diagnosis anyway; the best-scoring round's student is what we keep at the end.
+            if rnd >= min_rounds:
+                stopped_by = "no_improvement"
+                break
         if stopped_by == "budget" or rnd == max_rounds:
             break
         confusions = top_confusions(d_y, d_pred, n_conf)

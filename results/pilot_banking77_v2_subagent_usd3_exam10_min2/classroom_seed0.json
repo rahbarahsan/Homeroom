@@ -1,0 +1,150 @@
+{
+  "arm": "classroom",
+  "seed": 0,
+  "k_shot": 10,
+  "n_train": 2148,
+  "test": {
+    "n": 3080,
+    "accuracy": 0.8720779220779221,
+    "macro_f1": 0.871251995677999,
+    "ece": 0.04254519180334234,
+    "nll": 0.5505938803993106
+  },
+  "cost": {
+    "limit_usd": 3.0,
+    "spent_usd": 1.483684,
+    "real_spent_usd": 0.842804,
+    "calls": 209,
+    "cached_calls": 77,
+    "input_tokens": 136841,
+    "output_tokens": 46816,
+    "by_tag_usd": {
+      "exam": 0.420972,
+      "lesson": 0.64088,
+      "remedial": 0.421832
+    }
+  },
+  "runtime_s": 11573.0,
+  "stopped_by": "no_improvement",
+  "best_round": 3,
+  "history": [
+    {
+      "round": 0,
+      "n_train": 1539,
+      "score_acc": 0.9221,
+      "diag_acc": 0.9318,
+      "spent_usd": 1.061852,
+      "improved": true
+    },
+    {
+      "round": 1,
+      "n_train": 1773,
+      "score_acc": 0.9273,
+      "diag_acc": 0.9528,
+      "spent_usd": 1.175852,
+      "improved": true
+    },
+    {
+      "round": 2,
+      "n_train": 1957,
+      "score_acc": 0.9377,
+      "diag_acc": 0.9501,
+      "spent_usd": 1.26802,
+      "improved": true
+    },
+    {
+      "round": 3,
+      "n_train": 2148,
+      "score_acc": 0.9532,
+      "diag_acc": 0.9423,
+      "spent_usd": 1.368344,
+      "improved": true
+    },
+    {
+      "round": 4,
+      "n_train": 2372,
+      "score_acc": 0.9532,
+      "diag_acc": 0.9396,
+      "spent_usd": 1.483684,
+      "improved": false
+    }
+  ],
+  "exam_sizes": {
+    "diagnostic": 381,
+    "score": 385
+  },
+  "n_generated": 1378,
+  "n_rules": 55,
+  "experiment": "pilot_banking77_v2_subagent_usd3_exam10_min2",
+  "git_commit": "5be7cf1",
+  "git_dirty": true,
+  "config": {
+    "experiment": {
+      "name": "pilot_banking77_v2_subagent_usd3_exam10_min2",
+      "seeds": [
+        0
+      ],
+      "results_dir": "results",
+      "full_name": "pilot_banking77_v2_subagent_usd3_exam10_min2"
+    },
+    "data": {
+      "dataset": "banking77",
+      "cache_dir": "data/raw",
+      "teacher_cache_dir": "data/cache",
+      "k_shot": 10
+    },
+    "teacher": {
+      "provider": "queue",
+      "model": "claude-opus-5-5",
+      "price_input_per_mtok": 4.0,
+      "price_output_per_mtok": 20.0,
+      "temperature": null,
+      "max_tokens": 1024,
+      "queue_timeout_s": 21600
+    },
+    "budget": {
+      "usd_per_arm": 3.0
+    },
+    "arms": [
+      "real_fewshot",
+      "classroom",
+      "bulk"
+    ],
+    "bulk": {
+      "examples_per_call": 20,
+      "max_examples_per_intent": 200,
+      "match_classroom_spend": true
+    },
+    "classroom": {
+      "exam_items_per_intent": 10,
+      "lesson_examples_per_intent": 10,
+      "max_rounds": 4,
+      "confusions_per_round": 15,
+      "examples_per_confusion": 8,
+      "stop_if_score_gain_below": 0.002,
+      "min_rounds": 2
+    },
+    "student": {
+      "kind": "setfit",
+      "setfit": {
+        "model": "sentence-transformers/all-mpnet-base-v2",
+        "batch_size": 16,
+        "num_epochs": 1,
+        "num_iterations": 20,
+        "max_steps": 2000,
+        "head_C": 100.0,
+        "head_max_iter": 1000
+      },
+      "hf_classifier": {
+        "model": "answerdotai/ModernBERT-base",
+        "epochs": 5,
+        "lr": 5e-05,
+        "batch_size": 32,
+        "max_length": 64
+      },
+      "tfidf": {
+        "C": 10.0
+      }
+    }
+  }
+}

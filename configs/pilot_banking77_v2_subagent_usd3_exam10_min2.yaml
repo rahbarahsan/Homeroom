@@ -1,0 +1,60 @@
+# $3 cap + steadier stopping signal (10 exam items, min 2 remedial rounds); teacher = external subagent via the queue provider. Spend is an
+# ESTIMATE (chars/4 tokens, no thinking tokens) priced at Claude Opus 5.5 API rates.
+# Not comparable to API-billed runs. See docs/decisions.md.
+experiment:
+  name: pilot_banking77_v2_subagent_usd3_exam10_min2
+  seeds: [0]
+  results_dir: results
+
+data:
+  dataset: banking77          # banking77 | toy
+  cache_dir: data/raw
+  teacher_cache_dir: data/cache
+  k_shot: 10                  # real examples per intent the student starts with (baseline ≈ 88% with SetFit)
+
+teacher:
+  provider: queue             # answered by the homeroom-teacher subagent
+  model: claude-opus-5-5      # model the subagent runs on (label; part of the cache key)
+  price_input_per_mtok: 4.0   # Claude Opus 5.5 API list price, USD / 1M input tokens
+  price_output_per_mtok: 20.0 # USD / 1M output tokens
+  temperature: null           # Opus 5.5 rejects sampling params; subagent can't set them anyway
+  max_tokens: 1024            # worst-case output reserved per request (largest reply so far ≈ 420)
+  queue_timeout_s: 21600
+
+budget:
+  usd_per_arm: 3.0
+
+arms: [real_fewshot, classroom, bulk]   # add full_data for the oracle upper bound (slow with SetFit)
+
+bulk:
+  examples_per_call: 20
+  max_examples_per_intent: 200
+  match_classroom_spend: true # bulk spend cap = classroom's actual spend for the same seed (fair comparison)
+
+classroom:
+  exam_items_per_intent: 10   # 5 diagnostic + 5 score per intent (was 6: score half too coarse)
+  lesson_examples_per_intent: 10
+  max_rounds: 4
+  confusions_per_round: 15
+  examples_per_confusion: 8
+  stop_if_score_gain_below: 0.002
+  min_rounds: 2               # always run >= 2 remedial rounds; keep the best-scoring round
+
+student:
+  kind: setfit                # tfidf (smoke test) | setfit (primary) | hf_classifier
+  setfit:
+    model: sentence-transformers/all-mpnet-base-v2   # same family as the published baselines
+    batch_size: 16
+    num_epochs: 1
+    num_iterations: 20
+    max_steps: 2000           # caps training time when synthetic data grows
+    head_C: 100.0             # logistic-regression head; setfit default C=1 is badly under-confident
+    head_max_iter: 1000
+  hf_classifier:
+    model: answerdotai/ModernBERT-base
+    epochs: 5
+    lr: 5.0e-5
+    batch_size: 32
+    max_length: 64
+  tfidf:
+    C: 10.0

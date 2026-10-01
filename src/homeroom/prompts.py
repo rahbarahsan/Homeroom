@@ -18,13 +18,17 @@ def _bullets(items: list[str], limit: int = 10) -> str:
     return "\n".join(f"- {t}" for t in items[:limit]) or "- (none)"
 
 
-def exam_prompt(task_desc: str, intent: str, all_intents: list[str], n: int) -> str:
+def exam_prompt(task_desc: str, intent: str, all_intents: list[str], seeds: list[str], n: int) -> str:
     return f"""TASK: {task_desc}
 ALL INTENT LABELS: {", ".join(all_intents)}
 
+REAL EXAMPLES labelled "{intent}" (they define what this label means in this dataset; the label
+name alone can be misleading; do not copy them):
+{_bullets(seeds)}
+
 Write an EXAM for the intent "{intent}": {n} realistic user messages that a careful human would
-label as "{intent}" and not as any other label. Include some harder, borderline-but-still-correct
-phrasings. Vary length, tone and vocabulary. No numbering.
+label as "{intent}" (in the sense of the real examples above) and not as any other label. Include
+some harder, borderline-but-still-correct phrasings. Vary length, tone and vocabulary. No numbering.
 
 Return JSON: {{"items": ["...", "..."]}}"""
 
