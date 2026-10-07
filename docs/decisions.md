@@ -172,8 +172,11 @@ Setup: native Windows, torch 2.11+cu128, setfit 1.2.0, transformers 5.17, senten
   these amounts exclude thinking, subscription usage, and GPU costs.
 - This is a separately identified teacher study. New results must never be used to
   fill missing cells in the historical Claude comparison. Generated teacher text
-  stays private. No Codex teacher requests have been made yet; generation is
-  pending the teacher-isolation choice.
+  stays private. The human authorized isolated Codex teacher agents; generation
+  is now running. Agents receive only their assigned queue batch, without
+  result files or official test data. Fixed exams and lessons may be prepared
+  from training data while students train; cached costs are replayed in the
+  main run. See docs/queue-teacher.md for validation and resume instructions.
 
 
 ## Open items
