@@ -1,7 +1,7 @@
-# CLAUDE.md — homeroom
+# Development guide — Homeroom
 
-This file is the working memory for Claude Code. Read it fully before doing anything.
-Deeper context lives in `docs/` (read `docs/research-context.md` before any design change).
+Development commands, experiment constraints, and the current pilot state.
+Read `docs/research-context.md` before changing the research design.
 
 ## What this project is
 
@@ -40,9 +40,12 @@ Published reference numbers (Loukas et al. 2023, SetFit + all-mpnet-base-v2):
 Our measured k=10 baseline is 84.1 ± 0.5. **No-go** → write a short negative-results post.
 
 ### Milestones (do them in order)
-1. `homeroom run --dry-run` passes (mock teacher, tf-idf student, no GPU, no API cost).
-2. Reproduce the baseline: `real_fewshot` with SetFit+mpnet at k=10 ≈ 88% (±2). If far off, fix
-   the student pipeline before touching the teacher. This validates our evaluation.
+1. `homeroom run --config configs/toy_smoke.yaml --dry-run --seeds 0` passes
+   (mock teacher, tf-idf student, no GPU, no API cost).
+2. Reproduce the committed SetFit + MPNet baselines: k=10 at 84.11% ± 0.47 percentage points
+   and k=20 at 88.21% ± 0.17 percentage points, each over three seeds with the same recipe.
+   Investigate differences using a holdout from unused training data before touching the teacher.
+   See `results/pilot_banking77_v2/summary.md` and `results/pilot_banking77_v2_k20/summary.md`.
 3. Fill in teacher provider/model/prices in `.env`; run `classroom` + `bulk` for seed 0 at a tiny
    budget ($1) to check cost accounting against the provider dashboard.
 4. Full pilot: 3 seeds × all arms; `homeroom summarize`.
@@ -57,7 +60,8 @@ student, LEDGAR legal domain, STP/LLM-JEPA loss on the student. See `docs/experi
 2. **Never look at the official test set before final evaluation.** Test data is used only in
    `final_eval`. No tuning, prompt changes, or stopping decisions based on test scores.
    Dev/stopping signal comes from the teacher-written exam ("score" half) or a real holdout.
-3. **Every teacher call goes through `TeacherSession.ask`** (budget check + cache + ledger). No
+3. **Every teacher call goes through `TeacherSession.ask` or `TeacherSession.ask_many`**
+   (budget check + cache + ledger). No
    direct SDK calls anywhere else. Budget is a hard cap; `BudgetExceeded` must stop generation.
 4. **Refuse to spend with unset prices.** If `price_*_per_mtok` is 0 for a real provider, abort.
 5. **Every run writes a result JSON** to `results/<experiment>/` (config snapshot, seed, spend,
@@ -89,7 +93,7 @@ uv pip install -e ".[gpu]"                             # setfit, transformers, d
 pre-commit install
 
 homeroom check-gpu
-homeroom run --config configs/pilot_banking77.yaml --dry-run          # milestone 1
+homeroom run --config configs/toy_smoke.yaml --dry-run --seeds 0      # milestone 1
 homeroom run --config configs/pilot_banking77.yaml --arms real_fewshot --seeds 0
 homeroom run --config configs/pilot_banking77.yaml                     # full pilot
 homeroom summarize --config configs/pilot_banking77.yaml
@@ -110,7 +114,7 @@ src/homeroom/
   arms.py       real_fewshot, full_data, bulk, classroom
   run.py        CLI: run / summarize / check-gpu
 configs/        experiment configs (one file per experiment)
-docs/           research context, plan, related work, decisions, kickoff prompts
+docs/           research context, plan, related work, decisions, development workflow
 results/        per-run JSON + summary.md (committed)
 data/           raw downloads, teacher cache, generated data (gitignored)
 ```

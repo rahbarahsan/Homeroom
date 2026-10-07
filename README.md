@@ -1,94 +1,118 @@
-# homeroom 🏫
+# Homeroom
 
-**Budget-aware teacher-in-the-loop fine-tuning.** A strong "teacher" model writes lessons, sets
-exams, diagnoses a small "student" model's mistakes, and writes remedial material only where the
-student fails. The goal: a small specialist you own, trained for a few dollars of teacher spend.
+**Teach small models with a fixed budget.**
 
-> Status: **Phase 1 pilot** (Banking77). No results yet. This README will report honest numbers,
-> including negative ones.
+Homeroom compares adaptive teaching with ordinary few-shot training and bulk
+synthetic data. A teacher model builds an exam, diagnoses a student's errors,
+and generates targeted training examples. Every teacher request passes through
+a budget check, cache, and cost ledger.
 
-## Why
+The question is practical: **at the same teacher spend, does feedback produce a
+better specialist?**
 
-Independent developers can fine-tune small open models, but lack the data big labs have, and
-asking a frontier model to label every example is expensive. homeroom asks a narrow, measurable
-question:
+## Current results
 
-> At equal teacher spend, does closed-loop teaching beat (a) a handful of real examples and
-> (b) bulk synthetic data?
+The Banking77 pilot is in progress. Committed SetFit + MPNet baselines use
+randomly sampled examples and three seeds:
 
-The loop idea itself builds on prior work (LLM2LLM, Lion, DataEnvGym, Montessori-Instruct,
-pedagogically-inspired distillation). homeroom's focus is **accuracy per dollar**, fair equal-spend
-baselines, and a simple tool. See [`docs/related-work.md`](docs/related-work.md).
+| Training data | Test accuracy, mean ± standard deviation | Examples |
+|---|---:|---:|
+| 10 real examples per intent | 84.11% ± 0.47 percentage points | 770 |
+| 20 real examples per intent | 88.21% ± 0.17 percentage points | 1,540 |
 
-## How the classroom works
+Sources: [10-shot results](results/pilot_banking77_v2/summary.md) and
+[20-shot results](results/pilot_banking77_v2_k20/summary.md).
 
-```
-real seed examples (k per intent)
-        │
-teacher writes EXAM ──► split: diagnostic half │ score half
-        │
-teacher writes LESSONS (definition + examples per intent)
-        │
-   ┌─► train student ─► take exam ─► top confusions (A mistaken for B)
-   │                                        │
-   └── teacher writes REMEDIAL examples for A vs B ◄┘   (stop: budget / no gain / max rounds)
-        │
-final evaluation on the official human-labeled test set (only here)
-```
+These are measured project baselines, not the published reference scores.
+Exploratory teacher runs use one seed and estimated teacher costs; they do not
+yet establish a consistent advantage over bulk generation. See the
+[experiment history](docs/decisions.md) for configurations, results, and caveats.
 
-Every teacher call passes through a hard USD budget, a disk cache and a cost ledger.
+## How it works
+
+1. Sample a small set of real examples per intent.
+2. Generate an exam and split it into diagnostic and scoring subsets.
+3. Generate lessons and train the student.
+4. Diagnose confusions using the diagnostic subset.
+5. Generate targeted examples, retrain, and retain the best scoring round.
+6. Stop at the budget, round, or improvement limit.
+7. Evaluate the final model on the held-out human-labeled test set.
+
+Real examples remain in the training set. Generated training text is
+deduplicated against exam items, and the official test set is excluded from
+teaching and stopping decisions.
 
 ## Quick start
 
+Python 3.10 or newer. The mock-teacher path needs no API key or GPU.
+
 ```bash
-git clone https://github.com/<you>/homeroom && cd homeroom
-uv venv && uv pip install -e ".[dev]"        # or: python -m venv .venv && pip install -e ".[dev]"
+git clone https://github.com/rahbarahsan/Homeroom.git
+cd Homeroom
+python -m venv .venv
+# macOS / Linux
+source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
 pytest -q
-homeroom run --config configs/pilot_banking77.yaml --dry-run --seeds 0   # mock teacher, no cost
+homeroom run --config configs/toy_smoke.yaml --dry-run --seeds 0
 ```
 
-GPU students (SetFit, ModernBERT):
+The dry run exercises the pipeline with a mock teacher and a TF-IDF student.
+Its outputs are smoke-test artifacts, not model-quality or spending evidence.
+
+For GPU students, install the PyTorch build appropriate for your hardware,
+then:
 
 ```bash
-# 1) install torch with the CUDA wheel for your machine: https://pytorch.org/get-started/locally/
-# 2) then:
-uv pip install -e ".[gpu]"
+python -m pip install -e ".[gpu]"
 homeroom check-gpu
-homeroom run --config configs/pilot_banking77.yaml --arms real_fewshot --seeds 0   # ≈88% expected
+homeroom run --config configs/pilot_banking77.yaml --arms real_fewshot --seeds 0
 ```
 
-Paid teacher: copy `.env.example` to `.env`, set provider, model, key and **current prices**
-(runs refuse to start with unset prices), then:
+To use a real teacher, copy `.env.example` to `.env` and configure the provider,
+model, API key, and token prices. Unset prices are rejected.
 
 ```bash
 homeroom run --config configs/pilot_banking77.yaml
 homeroom summarize --config configs/pilot_banking77.yaml
 ```
 
-Windows tip: WSL2 is usually smoother for the GPU stack. Pre-Ampere GPUs (e.g. RTX 20xx) use fp16.
+## Comparisons
 
-## Arms
-
-| Arm | Description |
+| Arm | Training strategy |
 |---|---|
-| `real_fewshot` | Student on k real examples per intent only |
-| `bulk` | Uniform teacher-generated examples, spend matched to `classroom` |
-| `classroom` | Exam → lessons → diagnose → remediate loop |
-| `full_data` | Oracle upper bound on all real training data |
+| `real_fewshot` | Real seed examples only |
+| `bulk` | Uniform synthetic examples, matched to classroom spend |
+| `classroom` | Lessons, diagnosis, and targeted remediation |
+| `full_data` | All available real training examples |
 
-Published Banking77 references (SetFit + MPNet, Loukas et al. 2023): 10-shot 88.0%, 20-shot 91.2%,
-full data 94.0%.
+Reports include accuracy, macro-F1, calibration error, training-set size,
+teacher tokens, spending, and the resolved experiment configuration. Estimated
+costs and API-billed costs must be kept separate.
 
-## Repo layout
+## Next experiments
 
-See [`CLAUDE.md`](CLAUDE.md) (also the working guide for Claude Code) and [`docs/`](docs/).
+- Complete the teacher comparison across three seeds.
+- Evaluate Laya as an additional decision-model candidate, with an appropriate
+  ModernBERT baseline and explicit hardware measurements. This integration is
+  planned; current results do not include Laya.
+- Measure exam quality and stopping-signal variance before expanding domains.
 
-## Data and terms
+[Laya](https://github.com/NandhaKishorM/laya) produces typed decisions rather
+than free-form lessons, so its intended role is a student or assessor.
 
-Code, configs and result tables are public. Teacher-generated text is **not** committed until the
-teacher provider's terms are confirmed to allow it. Check your provider's terms before training on
-its outputs.
+## Development
+
+- [Development guide](DEVELOPMENT.md): setup, commands, and evaluation rules.
+- [Experiment plan](docs/experiment-plan.md): pilot design and later experiments.
+- [Decision log](docs/decisions.md): changes, measured findings, and open questions.
+- [Related work](docs/related-work.md): research context and attribution.
+
+The teaching loop builds on existing research. Homeroom's focus is reproducible
+quality-versus-cost comparisons and a usable experimental workflow.
 
 ## License
 
-Apache-2.0
+Apache-2.0. See [LICENSE](LICENSE). Generated training datasets are excluded
+from the public repository pending review of the teacher provider's terms.
