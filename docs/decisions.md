@@ -185,6 +185,42 @@ Setup: native Windows, torch 2.11+cu128, setfit 1.2.0, transformers 5.17, senten
   changes. Preserve the initial subagent replies and record the CLI transport
   change without changing model, prompts, scientific settings, or budget.
 
+## Completed Codex Luna pilot (2026-10-07)
+
+- All nine configured runs completed: real_fewshot, classroom and bulk for
+  seeds 0/1/2, with unchanged scientific settings. Complete-seed validation
+  and a fresh aggregation matched the saved report.
+- Accuracy: real_fewshot 84.12% ± 0.48 pp; classroom 85.17% ± 0.54 pp;
+  bulk 85.53% ± 0.55 pp. Classroom minus bulk was −0.36 ± 0.27 pp:
+  one tie, two losses, zero wins. Population standard deviations, ddof=0.
+- **No-go for this fixed recipe:** classroom did not reach the agreed 88.2%
+  mean target and did not beat matched bulk. Publish the negative finding;
+  do not alter this study after observing official test results.
+- Classroom retained 2,014 examples on average versus 4,640 for bulk, but
+  its extra fits took longer. Remediation reached the chosen student in all
+  three seeds; selected rounds were 1/4/1, with score-exam accuracies
+  94.55%/95.58%/95.58%. These exceed real-query test accuracy substantially.
+  Exam quality is a candidate explanation, not an established cause.
+- Mean API-equivalent estimates: classroom $0.041346, bulk $0.040376.
+  Bulk underspent each matched cap by $0.000890/$0.001066/$0.000952.
+  Total final accounted usage was $0.245166, excluding thinking tokens,
+  subscription, GPU/training and energy; these values are not bills.
+- Saved 1,157 unique teacher requests in 269 batches. The fixed supervisor
+  completed the main experiment in one attempt with no recorded generation
+  retries or quota errors. Recovery was verified separately; actual quota
+  exhaustion/reset did not occur in this supervised run.
+- Raw teacher outputs, ledgers and model checkpoints remain private.
+  Aggregate metrics, resolved configs, environment/source provenance and
+  reports are public. Initial subagent-to-CLI transport change is disclosed;
+  historical Claude results remain separate.
+- Next research decision: an independent training-only holdout and an
+  exam-quality comparison could test the weak stopping-signal hypothesis.
+  Use a new experiment identity and define the comparison before test
+  evaluation. No additional teacher study is started under this result.
+
+See [the completed study](banking77-codex-luna-study.md) and
+[validated report](../results/pilot_banking77_codex_luna/report.md).
+
 ## Open items
 - [ ] Choose teacher provider/model; confirm its terms allow training a (non-competing) classifier on
       outputs and whether generated data may be published. Record the decision here.

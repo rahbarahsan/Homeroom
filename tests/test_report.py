@@ -99,10 +99,16 @@ def test_offline_demo_generates_complete_report(tmp_path, monkeypatch):
     assert all(g["accuracy"]["n"] == 3 for g in r["groups"].values())
     assert "Mock outputs" in (out / "report.md").read_text(encoding="utf-8")
     assert (out / "accuracy_vs_spend.png").read_bytes().startswith(b"\x89PNG")
+    svg = (out / "accuracy_vs_spend.svg").read_text(encoding="utf-8")
+    assert all(line == line.rstrip() for line in svg.splitlines())
+    assert svg.endswith("\n") and not svg.endswith("\n\n")
+    import xml.etree.ElementTree as ET
+    assert ET.fromstring(svg).tag == "{http://www.w3.org/2000/svg}svg"
     # Re-running uses saved results rather than duplicating seed data.
     hashes = r["source_sha256"]
     main(["demo"])
     assert json.loads((out / "report.json").read_text())["source_sha256"] == hashes
+    assert (out / "accuracy_vs_spend.svg").read_text(encoding="utf-8") == svg
 
 
 def test_demo_refuses_a_paid_teacher_before_running(tmp_path):

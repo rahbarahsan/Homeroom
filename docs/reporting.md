@@ -83,3 +83,16 @@ comparison.
 Changing the teacher model starts a separate experiment. Keep model names,
 token prices, prompts, seed draws, student settings, and cost provenance with
 the results. Never combine different teacher models into one three-seed mean.
+
+## Completed Banking77 study
+
+The [Codex Luna study](banking77-codex-luna-study.md) includes all nine real
+runs and an accuracy-versus-estimated-cost figure. Regenerate its validated
+report directly from the committed JSON, without a GPU or teacher request:
+
+~~~bash
+homeroom report --config configs/pilot_banking77_codex_luna.yaml
+~~~
+
+Classroom tied bulk on one seed and lost on two. Read the study for the fixed
+recipe, cost accounting, stopping history, negative finding and limitations.

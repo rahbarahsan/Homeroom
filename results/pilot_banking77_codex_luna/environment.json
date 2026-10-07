@@ -1,0 +1,89 @@
+{
+  "experiment": "pilot_banking77_codex_luna",
+  "python": "3.12.13 (main, Jul 18 2026, 17:08:38) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "packages": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "torch": "2.11.0+cu128",
+    "setfit": "1.2.0",
+    "transformers": "5.17.0",
+    "datasets": "5.0.1",
+    "sentence-transformers": "6.1.0"
+  },
+  "gpu": {
+    "name": "NVIDIA GeForce RTX 2060",
+    "vram_gib": 6,
+    "precision": "fp16"
+  },
+  "git_commit_at_start": "93873985296eb25bde4f8b566454731452c28eaf",
+  "source_sha256": {
+    "src/homeroom/__init__.py": "5ec5f808b81939cec25eeb5f5844e332ad7c1dee4e84ae1075360b0143de84cf",
+    "src/homeroom/arms.py": "3ad387a6912a3a0ed5efdc64d4e031d3eea14d5c149f16e2e8ae35016bc7660c",
+    "src/homeroom/budget.py": "5396ca5a1c5f1911158d34940d24b6ac1d5ee3c231a6f1b3e369444f8137ec8c",
+    "src/homeroom/config.py": "b62e240ad054c1f4b44124c51bbab656c09d22496f13b80f3f5efdab90d253aa",
+    "src/homeroom/data.py": "b27d9485bc4f346de3da4c5992a46360a2b56d5187f52ac4346f9c9a034ee386",
+    "src/homeroom/evaluate.py": "1654a8a632026f4f6f2c5b178e92f3c848de1a8036af60d0246a63474de52e9b",
+    "src/homeroom/prompts.py": "5f4384ca6d5ff3a1e0b65f4e92b7c62bfad0437b5f915a357724accdb6eb507e",
+    "src/homeroom/report.py": "5fdf2f394d7dbc8abde6f3678ddb83e6f1ad717773cfc24b62481b590827e69c",
+    "src/homeroom/run.py": "99be63e23c6e88b0551372ad851c5f6338a2afa1044eaf8e944031a0fd0c77a6",
+    "src/homeroom/students.py": "68d8e0af49bdffbb9a4866354c333cd9a212b5992d045ddd18b515fdb3541c0c",
+    "src/homeroom/teacher.py": "f32366b1b3954dd0d55573f6c9a533e6288d31753214bbceeb6de4144e85760d"
+  },
+  "config_sha256": "947019f6ed124f9b57ed305d528789228ac5f929718345ad99ebba1af1276357",
+  "training_data_sha256": "b06e26ac675513959a63135f11b94ea7786ed02da65db93a5650d8838cbc664b",
+  "teacher": {
+    "model": "gpt-6-luna",
+    "reasoning": "low",
+    "backend": "isolated Codex subagents and non-interactive Codex CLI; same model and reasoning",
+    "cost_basis": "API-equivalent character/4 estimate; thinking and subscription usage excluded"
+  },
+  "notes": [
+    "Pre-existing local queue parser edits are preserved and included in the source hashes.",
+    "Prewarming uses training data only; the main run accounts for cached replies at original estimated cost.",
+    "The public aggregate report is reproducible from committed results; identical student reruns require private synthetic outputs and may vary under GPU nondeterminism.",
+    "Final reporting change strips trailing whitespace from SVG exports; experiment metrics and scientific settings are unchanged."
+  ],
+  "queue_workflow_commit": "0e77533a1ff5c4b14d17b7c6d043c78d758eeba0",
+  "queue_helper_sha256": {
+    "scripts/teacher_queue.py": "a822a44f8b9ee7af3cf6cc7372510596d1e6b2cffd493da5d1a0b23b12edbe33",
+    "scripts/prepare_teacher_queue.py": "d1d33d75504b3a530763b2118dafab1c25eaeea71ce145c8f43595a02cbf56d8",
+    "scripts/write_teacher_replies.py": "444bff2b6a780cfa77a7efd2d7845ffdc10716108b4f36d241368d135aa1d355"
+  },
+  "unattended": {
+    "transport": "isolated Codex subagents b0001-b0018; isolated Codex CLI sessions from b0019",
+    "model_and_reasoning_unchanged": true,
+    "completed_fit_checkpoints": true,
+    "quota_recovery": "known reset plus margin, otherwise one-to-six-hour backoff",
+    "billing": "existing ChatGPT login; no API keys or credit purchases",
+    "checkpoint_fit_mid_interruption": "unfinished fit repeats; completed fits restore"
+  },
+  "unattended_workflow_commit": "f99dc8d12b44e0ccf11c129e1dad22f34fa0f157",
+  "unattended_source_sha256": {
+    "src/homeroom/checkpoint.py": "054a045e8ce32f7e360ae3679a9e8d2c8bab33fdffd432194034c817e213b4d9",
+    "scripts/checkpoint_run.py": "405f77faab257c5a627208baf9141f959d49068e93d287a8ada2ef7091055998",
+    "scripts/unattended_study.py": "a20173b18a2bd2f507286fe18ac86b45464a64b5d6de3e79d1624f050f80dd85"
+  },
+  "unattended_recovery_commit": "9abd515",
+  "study_outcome": {
+    "completed_runs": 9,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "go_threshold_accuracy": 0.882,
+    "decision": "no-go for this fixed recipe",
+    "total_estimated_accounted_usd": 0.245166,
+    "teacher_requests": 1157,
+    "teacher_batches": 269,
+    "supervised_main_attempts": 1,
+    "recorded_teacher_retries": 0,
+    "recorded_quota_errors": 0,
+    "ledger_verification": "Latest final-attempt token counts and unrounded token-rate costs reconciled; prior seed0 prewarm segment preserved privately."
+  },
+  "final_reporting_source_sha256": {
+    "src/homeroom/report.py": "867c9ff22a024f1b65a1986f854ed1893fa0cf4f6719cc7f5a2f44210794f74e"
+  }
+}

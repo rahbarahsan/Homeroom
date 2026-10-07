@@ -235,7 +235,12 @@ def plot_report(report: dict, rows: list[dict], out: Path) -> None:
         fig.tight_layout(rect=(0, 0.06, 1, 1))
         try:
             fig.savefig(out / "accuracy_vs_spend.png", dpi=180)
-            fig.savefig(out / "accuracy_vs_spend.svg", metadata={"Date": None})
+            svg = out / "accuracy_vs_spend.svg"
+            fig.savefig(svg, metadata={"Date": None})
+            # Matplotlib emits spaces at line ends; keep regenerated exports Git-clean.
+            svg.write_text("\n".join(line.rstrip() for line in
+                                     svg.read_text(encoding="utf-8").splitlines()) + "\n",
+                           encoding="utf-8")
         finally:
             plt.close(fig)
 

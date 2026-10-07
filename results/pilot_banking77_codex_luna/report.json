@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "experiment": "pilot_banking77_codex_luna",
+  "dataset": "banking77",
+  "student": "setfit",
+  "teacher": "gpt-6-luna",
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "cost_basis": "estimated",
+  "standard_deviation": "population (ddof=0)",
+  "groups": {
+    "real_fewshot": {
+      "accuracy": {
+        "mean": 0.8412337662337662,
+        "std": 0.004823004319298104,
+        "n": 3
+      },
+      "macro_f1": {
+        "mean": 0.840943725383859,
+        "std": 0.005185028840353044,
+        "n": 3
+      },
+      "ece": {
+        "mean": 0.03151777807574766,
+        "std": 0.004568011778199117,
+        "n": 3
+      },
+      "spent_usd": {
+        "mean": 0.0,
+        "std": 0.0,
+        "n": 3
+      },
+      "n_train": {
+        "mean": 770.0,
+        "std": 0.0,
+        "n": 3
+      }
+    },
+    "classroom": {
+      "accuracy": {
+        "mean": 0.8517316017316018,
+        "std": 0.005356869554443541,
+        "n": 3
+      },
+      "macro_f1": {
+        "mean": 0.8508652250149525,
+        "std": 0.005687398473225898,
+        "n": 3
+      },
+      "ece": {
+        "mean": 0.048861718947043664,
+        "std": 0.004819695239273711,
+        "n": 3
+      },
+      "spent_usd": {
+        "mean": 0.04134566666666666,
+        "std": 0.004040768436269958,
+        "n": 3
+      },
+      "n_train": {
+        "mean": 2013.6666666666667,
+        "std": 331.86978704840783,
+        "n": 3
+      }
+    },
+    "bulk": {
+      "accuracy": {
+        "mean": 0.8553030303030303,
+        "std": 0.005473666067706389,
+        "n": 3
+      },
+      "macro_f1": {
+        "mean": 0.8538832733914902,
+        "std": 0.006103436994550574,
+        "n": 3
+      },
+      "ece": {
+        "mean": 0.05355923174521624,
+        "std": 0.0019246123367233593,
+        "n": 3
+      },
+      "spent_usd": {
+        "mean": 0.040376333333333334,
+        "std": 0.003974901787745482,
+        "n": 3
+      },
+      "n_train": {
+        "mean": 4640.0,
+        "std": 346.08187855862474,
+        "n": 3
+      }
+    }
+  },
+  "pairs": [
+    {
+      "seed": 0,
+      "classroom_accuracy": 0.8506493506493507,
+      "bulk_accuracy": 0.8506493506493507,
+      "accuracy_difference_pp": 0.0,
+      "bulk_underspend_usd": 0.000889999999999995
+    },
+    {
+      "seed": 1,
+      "classroom_accuracy": 0.8587662337662337,
+      "bulk_accuracy": 0.862987012987013,
+      "accuracy_difference_pp": -0.4220779220779236,
+      "bulk_underspend_usd": 0.0010659999999999975
+    },
+    {
+      "seed": 2,
+      "classroom_accuracy": 0.8457792207792207,
+      "bulk_accuracy": 0.8522727272727273,
+      "accuracy_difference_pp": -0.6493506493506551,
+      "bulk_underspend_usd": 0.0009520000000000015
+    }
+  ],
+  "source_sha256": {
+    "real_fewshot_seed0.json": "46fb6c96d4cbb3bb37919acdba5c3d9ef638f16432f052a0acaf8b4fc97c472e",
+    "real_fewshot_seed1.json": "661c4e7f93d70398e2f01fa6cc8b31b8776f6dc44411a01ad1a0928c0d73f61e",
+    "real_fewshot_seed2.json": "adc7e6bcaa46ba9604c79d40ed75374a3ecaa9b7eb95916d28179a62e4f20f4b",
+    "classroom_seed0.json": "c48a24647140b704e016e0129144929fb6365d212ba2606daadd83aa975c6941",
+    "classroom_seed1.json": "03d71681dc940568ae5cb9a12a90fc0e8eb67118e626c617be16f360434d6ac3",
+    "classroom_seed2.json": "4052a7450059a5235432054419049a28e95e25a62756c2e45ef2b43cfed5f7e6",
+    "bulk_seed0.json": "776dcb413db0dfd5c1c20b8cae80fd7d490a495dc229f4345d6533d1911edc69",
+    "bulk_seed1.json": "b904468bb814b6f24158ce83abab8bd1e345ea10dac9ff3351fec24ca0132b65",
+    "bulk_seed2.json": "60961f19d2abb15e796e7767a8fd0c9da176546d46eb9b89686c0332f76d0e45"
+  },
+  "accuracy_difference_pp": {
+    "mean": -0.3571428571428596,
+    "std": 0.2690433526981852,
+    "n": 3
+  }
+}

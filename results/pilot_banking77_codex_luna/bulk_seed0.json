@@ -1,0 +1,103 @@
+{
+  "arm": "bulk",
+  "seed": 0,
+  "k_shot": 10,
+  "n_train": 4467,
+  "test": {
+    "n": 3080,
+    "accuracy": 0.8506493506493507,
+    "macro_f1": 0.8479663177591117,
+    "ece": 0.05468911939820688,
+    "nll": 0.6753414032906337
+  },
+  "cost": {
+    "limit_usd": 0.038914,
+    "spent_usd": 0.038024,
+    "real_spent_usd": 0.038024,
+    "calls": 185,
+    "cached_calls": 0,
+    "input_tokens": 59687,
+    "output_tokens": 64111,
+    "by_tag_usd": {
+      "bulk": 0.038024
+    }
+  },
+  "runtime_s": 1158.9,
+  "stopped_by": "budget",
+  "n_generated": 3697,
+  "spend_cap_usd": 0.038914,
+  "experiment": "pilot_banking77_codex_luna",
+  "git_commit": "9abd515",
+  "git_dirty": true,
+  "config": {
+    "experiment": {
+      "name": "pilot_banking77_codex_luna",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "results_dir": "results",
+      "full_name": "pilot_banking77_codex_luna"
+    },
+    "data": {
+      "dataset": "banking77",
+      "cache_dir": "data/raw",
+      "teacher_cache_dir": "data/cache",
+      "k_shot": 10
+    },
+    "teacher": {
+      "provider": "queue",
+      "model": "gpt-6-luna",
+      "price_input_per_mtok": 0.1,
+      "price_output_per_mtok": 0.5,
+      "temperature": null,
+      "max_tokens": 2048,
+      "queue_timeout_s": 21600
+    },
+    "budget": {
+      "usd_per_arm": 0.075
+    },
+    "arms": [
+      "real_fewshot",
+      "classroom",
+      "bulk"
+    ],
+    "bulk": {
+      "examples_per_call": 20,
+      "max_examples_per_intent": 200,
+      "match_classroom_spend": true
+    },
+    "classroom": {
+      "exam_items_per_intent": 10,
+      "lesson_examples_per_intent": 10,
+      "max_rounds": 4,
+      "confusions_per_round": 15,
+      "examples_per_confusion": 8,
+      "stop_if_score_gain_below": 0.002,
+      "min_rounds": 2
+    },
+    "student": {
+      "kind": "setfit",
+      "setfit": {
+        "model": "sentence-transformers/all-mpnet-base-v2",
+        "batch_size": 16,
+        "num_epochs": 1,
+        "num_iterations": 20,
+        "max_steps": 2000,
+        "head_C": 100.0,
+        "head_max_iter": 1000
+      },
+      "hf_classifier": {
+        "model": "answerdotai/ModernBERT-base",
+        "epochs": 5,
+        "lr": 5e-05,
+        "batch_size": 32,
+        "max_length": 64
+      },
+      "tfidf": {
+        "C": 10.0
+      }
+    }
+  }
+}

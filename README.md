@@ -12,21 +12,42 @@ better specialist?**
 
 ## Current results
 
-The Banking77 pilot is in progress. Committed SetFit + MPNet baselines use
-randomly sampled examples and three seeds:
+The completed Banking77 comparison uses **GPT-6 Luna**, SetFit + MPNet, ten
+real examples per intent and seeds 0, 1 and 2:
 
-| Training data | Test accuracy, mean ± standard deviation | Examples |
-|---|---:|---:|
-| 10 real examples per intent | 84.11% ± 0.47 percentage points | 770 |
-| 20 real examples per intent | 88.21% ± 0.17 percentage points | 1,540 |
+| Arm | Test accuracy, mean ± standard deviation | Estimated teacher cost (USD), mean | Retained examples, mean |
+|---|---:|---:|---:|
+| Real few-shot | 84.12% ± 0.48 percentage points | 0 | 770 |
+| Adaptive classroom | 85.17% ± 0.54 percentage points | 0.0413 | 2,014 |
+| Bulk generation | 85.53% ± 0.55 percentage points | 0.0404 | 4,640 |
 
-Sources: [10-shot results](results/pilot_banking77_v2/summary.md) and
-[20-shot results](results/pilot_banking77_v2_k20/summary.md).
+**Classroom tied bulk on one seed and lost on two.** The paired accuracy
+difference was −0.36 ± 0.27 percentage points. This recipe did not reach the
+88.2% target or beat bulk. Classroom retained about 57% fewer training
+examples; its additional fits also took longer.
 
-These are measured project baselines, not the published reference scores.
-Exploratory teacher runs use one seed and estimated teacher costs; they do not
-yet establish a consistent advantage over bulk generation. See the
-[experiment history](docs/decisions.md) for configurations, results, and caveats.
+![Banking77 accuracy versus estimated teacher cost](results/pilot_banking77_codex_luna/accuracy_vs_spend.png)
+
+Standard deviations describe variation across three seeds. Bulk's cap equals
+classroom's realized estimated spend for each seed; it underspent by about
+2.3–2.5%. Costs use characters / 4 and configured token rates, excluding
+thinking, subscription usage, training and hardware. **These are estimates,
+not provider bills.**
+
+Read [the study and limitations](docs/banking77-codex-luna-study.md) or
+[the complete report](results/pilot_banking77_codex_luna/report.md).
+Rebuild the report from committed results:
+
+~~~bash
+python -m pip install -e ".[report]"
+homeroom report --config configs/pilot_banking77_codex_luna.yaml
+~~~
+
+Earlier real-data references measured
+[84.11% ± 0.47 at 10 shots](results/pilot_banking77_v2/summary.md) and
+[88.21% ± 0.17 at 20 shots](results/pilot_banking77_v2_k20/summary.md).
+Historical teacher studies remain separate; see
+[the experiment history](docs/decisions.md).
 
 ## How it works
 
@@ -116,7 +137,8 @@ costs and API-billed costs must be kept separate.
 
 ## Next experiments
 
-- Complete the teacher comparison across three seeds.
+- Compare lessons only and remediation using a human-labeled training-only
+  holdout for model selection; record the additional validation labels.
 - Evaluate Laya as an additional decision-model candidate, with an appropriate
   ModernBERT baseline and explicit hardware measurements. This integration is
   planned; current results do not include Laya.
@@ -131,6 +153,7 @@ than free-form lessons, so its intended role is a student or assessor.
 - [Experiment plan](docs/experiment-plan.md): pilot design and later experiments.
 - [Decision log](docs/decisions.md): changes, measured findings, and open questions.
 - [Reporting guide](docs/reporting.md): reproducible demo, charts, and cost interpretation.
+- [Banking77 study](docs/banking77-codex-luna-study.md): completed comparison and negative finding.
 - [Related work](docs/related-work.md): research context and attribution.
 
 The teaching loop builds on existing research. Homeroom's focus is reproducible

@@ -19,7 +19,12 @@ The concept itself (diagnose → targeted data → retest) is prior art (LLM2LLM
 Montessori-Instruct, IOA 2026). Our contribution is **honest accuracy-per-dollar evidence** and an
 **easy open tool** for independent developers. Never claim conceptual novelty in docs or README.
 
-## Current phase: Phase 1 pilot (go / no-go)
+## Current phase: completed Phase 1 pilot (no-go for the Luna recipe)
+
+The [three-seed Codex Luna study](docs/banking77-codex-luna-study.md) is complete:
+classroom 85.17% ± 0.54 pp, bulk 85.53% ± 0.55 pp. Classroom tied one seed and
+lost two, falling short of the agreed 88.2% target. Preserve this negative result.
+Future recipe changes require a new experiment identity and predefined evaluation.
 
 Domain: **Banking77** intent classification (77 intents, 10,003 train / 3,080 test, short texts).
 Arms (same teacher budget cap, 3 seeds each):
