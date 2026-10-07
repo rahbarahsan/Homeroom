@@ -52,6 +52,8 @@ different existing answers. It does not assess semantic quality or example
 counts; the teacher must satisfy the prompt. The output-size bound is currently
 8,192 characters, matching this study's 2,048-token character estimate.
 
+For durable execution, see [the unattended study workflow](unattended-study.md).
+
 ## Quota interruptions and reporting
 
 If generation hits quota, preserve all replies, caches, ledgers, and result

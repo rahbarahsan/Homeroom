@@ -11,6 +11,7 @@ import numpy as np
 
 from .arms import ARM_ORDER, ARMS, ArmContext
 from .config import config_snapshot, load_config, results_dir
+from .checkpoint import atomic_json
 from .data import load_task, sample_k_shot
 
 
@@ -61,7 +62,7 @@ def cmd_run(args) -> None:
             res = ARMS[arm](ctx, **kwargs)
             res.update({"experiment": cfg["experiment"]["full_name"], "git_commit": _git_commit(),
                         "git_dirty": _git_dirty(), "config": config_snapshot(cfg)})
-            path.write_text(json.dumps(res, indent=2) + "\n", encoding="utf-8")
+            atomic_json(path, res)
             t = res["test"]
             print(f"    -> acc={t['accuracy']:.4f} macroF1={t['macro_f1']:.4f} ece={t['ece']:.3f} "
                   f"spent=${res['cost']['spent_usd']:.4f} n_train={res['n_train']}")

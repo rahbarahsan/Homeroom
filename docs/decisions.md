@@ -178,6 +178,12 @@ Setup: native Windows, torch 2.11+cu128, setfit 1.2.0, transformers 5.17, senten
   from training data while students train; cached costs are replayed in the
   main run. See docs/queue-teacher.md for validation and resume instructions.
 
+- 2026-10-07 - Human authorized unattended continuation, routine development/tests,
+  and automatic quota recovery. Added a fixed local supervisor, isolated read-only
+  Luna CLI teachers, completed-fit checkpoints, atomic result/cache writes, and
+  limited current-user restart scheduling. No paid API route or global security
+  changes. Preserve the initial subagent replies and record the CLI transport
+  change without changing model, prompts, scientific settings, or budget.
 
 ## Open items
 - [ ] Choose teacher provider/model; confirm its terms allow training a (non-competing) classifier on
