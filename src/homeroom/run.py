@@ -1,4 +1,4 @@
-"""CLI: homeroom run | summarize | check-gpu"""
+"""CLI: homeroom run | summarize | report | demo | check-gpu"""
 from __future__ import annotations
 
 import argparse
@@ -101,6 +101,25 @@ def cmd_summarize(args) -> None:
     print(text)
 
 
+def cmd_report(args) -> None:
+    from .report import ReportError, write_report
+    cfg = load_config(args.config, dry_run=getattr(args, "dry_run", False))
+    try:
+        path = write_report(cfg)
+    except ReportError as exc:
+        raise SystemExit(str(exc)) from exc
+    print(f"Report: {path}")
+
+
+def cmd_demo(args) -> None:
+    cfg = load_config(args.config)
+    if cfg.get("teacher", {}).get("provider") != "mock" or cfg.get("data", {}).get("dataset") != "toy":
+        raise SystemExit("demo requires the toy dataset and a mock teacher; use run for other experiments")
+    args.dry_run, args.arms, args.seeds, args.force = False, None, None, False
+    cmd_run(args)
+    cmd_report(args)
+
+
 def cmd_check_gpu(_args) -> None:
     try:
         import torch
@@ -140,6 +159,13 @@ def main(argv=None) -> None:
     s.add_argument("--config", required=True)
     s.add_argument("--dry-run", action="store_true")
     s.set_defaults(func=cmd_summarize)
+    p = sub.add_parser("report", help="validate all configured runs and export a report and chart")
+    p.add_argument("--config", required=True)
+    p.add_argument("--dry-run", action="store_true")
+    p.set_defaults(func=cmd_report)
+    d = sub.add_parser("demo", help="run the offline three-seed toy example and export a report")
+    d.add_argument("--config", default="configs/toy_demo.yaml")
+    d.set_defaults(func=cmd_demo)
     g = sub.add_parser("check-gpu", help="print GPU capabilities and advice")
     g.set_defaults(func=cmd_check_gpu)
     args = ap.parse_args(argv)

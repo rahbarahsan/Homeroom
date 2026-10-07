@@ -23,6 +23,7 @@ dependencies = [
 # Install torch separately with the CUDA wheel for your machine (see README).
 gpu = ["setfit>=1.1", "transformers>=4.48", "datasets>=2.19", "accelerate>=0.30"]
 dev = ["pytest>=8", "pre-commit>=3.7"]
+report = ["matplotlib>=3.8"]
 
 [project.scripts]
 homeroom = "homeroom.run:main"

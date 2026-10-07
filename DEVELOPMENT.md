@@ -87,10 +87,13 @@ NVIDIA RTX 2060 laptop, **6 GB VRAM** (~5.4 GB free), Turing (compute 7.5), 90 W
 ## Commands
 
 ```bash
-uv venv && uv pip install -e ".[dev]"                 # core (no torch)
+uv venv && uv pip install -e ".[dev,report]"                 # core (no torch)
 # torch: install the CUDA wheel matching your setup from pytorch.org, then:
 uv pip install -e ".[gpu]"                             # setfit, transformers, datasets
 pre-commit install
+
+homeroom demo                                     # offline 3-seed example + report
+homeroom report --config configs/toy_demo.yaml     # report saved results only
 
 homeroom check-gpu
 homeroom run --config configs/toy_smoke.yaml --dry-run --seeds 0      # milestone 1
@@ -112,7 +115,8 @@ src/homeroom/
   students.py   tfidf (smoke test), setfit (primary), hf_classifier (ModernBERT/Laya-style)
   evaluate.py   accuracy, macro-F1, ECE, NLL, top confusion pairs
   arms.py       real_fewshot, full_data, bulk, classroom
-  run.py        CLI: run / summarize / check-gpu
+  run.py        CLI: run / summarize / report / demo / check-gpu
+  report.py     complete-seed validation, paired comparisons, Markdown/JSON reports, charts
 configs/        experiment configs (one file per experiment)
 docs/           research context, plan, related work, decisions, development workflow
 results/        per-run JSON + summary.md (committed)

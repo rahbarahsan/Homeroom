@@ -152,6 +152,30 @@ Setup: native Windows, torch 2.11+cu128, setfit 1.2.0, transformers 5.17, senten
 - Open (addressed by the $3 run): to test the actual loop, the budget must cover exam + lessons + ≥1 remedial round (≈ $1.2+
   at Opus 5.5 rates) — or make the exam cheaper (fewer items / smaller model) or lessons richer.
 
+
+## Reporting and Codex teacher study (2026-10-06)
+
+- Added a reproducible offline three-seed example and report export. Reports
+  validate complete configured seed coverage, scientific settings, result identity,
+  and matched bulk caps. Queue costs remain estimates regardless of the historical
+  real_spent_usd field. Population standard deviation matches the existing summaries.
+- The historical Claude queue study currently has eight of nine local run results;
+  bulk seed 2 is unfinished. Preserve those results and model labels.
+- The human requested Codex for new generation and allowed efficient model selection.
+  Selected GPT-6 Luna with low reasoning for scoped text generation. Standard API
+  rates are $0.10 input and $0.50 output per million tokens, checked in the
+  [official model page](https://developers.openai.com/api/docs/models/gpt-6-luna).
+- New config: configs/pilot_banking77_codex_luna.yaml, seeds 0/1/2. Keep the same
+  Banking77 draws, SetFit + MPNet recipe, and stopping settings. The $0.075
+  API-equivalent estimated cap per arm scales the historical $3 cap by the 40x
+  price difference. Total accounted cap across classroom and bulk is $0.45;
+  these amounts exclude thinking, subscription usage, and GPU costs.
+- This is a separately identified teacher study. New results must never be used to
+  fill missing cells in the historical Claude comparison. Generated teacher text
+  stays private. No Codex teacher requests have been made yet; generation is
+  pending the teacher-isolation choice.
+
+
 ## Open items
 - [ ] Choose teacher provider/model; confirm its terms allow training a (non-competing) classifier on
       outputs and whether generated data may be published. Record the decision here.

@@ -61,6 +61,29 @@ homeroom run --config configs/toy_smoke.yaml --dry-run --seeds 0
 The dry run exercises the pipeline with a mock teacher and a TF-IDF student.
 Its outputs are smoke-test artifacts, not model-quality or spending evidence.
 
+### Reproducible example and report
+
+Run a complete offline example with three seeds:
+
+~~~bash
+python -m pip install -e ".[report]"
+homeroom demo
+~~~
+
+Open [the reporting guide](docs/reporting.md) for an example chart and the
+output files. The demo writes a report and PNG/SVG charts to
+results/toy_demo_dryrun/. It uses a mock teacher and toy data; its numbers
+demonstrate the workflow.
+
+To regenerate a report from saved experiment results:
+
+~~~bash
+homeroom report --config configs/YOUR_EXPERIMENT.yaml
+~~~
+
+The report requires all configured seeds, compares classroom and bulk by seed,
+and labels simulated, estimated, and API token costs separately.
+
 For GPU students, install the PyTorch build appropriate for your hardware,
 then:
 
@@ -107,6 +130,7 @@ than free-form lessons, so its intended role is a student or assessor.
 - [Development guide](DEVELOPMENT.md): setup, commands, and evaluation rules.
 - [Experiment plan](docs/experiment-plan.md): pilot design and later experiments.
 - [Decision log](docs/decisions.md): changes, measured findings, and open questions.
+- [Reporting guide](docs/reporting.md): reproducible demo, charts, and cost interpretation.
 - [Related work](docs/related-work.md): research context and attribution.
 
 The teaching loop builds on existing research. Homeroom's focus is reproducible
