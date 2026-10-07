@@ -369,6 +369,10 @@ class Supervisor:
                    for seed in (0, 1, 2) for arm in ("real_fewshot", "classroom", "bulk"))
 
     def run(self, one_batch=False):
+        if not one_batch and self.state.get("status") in {"results_complete", "report_needs_review"} and self.done():
+            self.nudge("All nine study results are already saved. Finish reporting, documentation and the authorized GitHub update; do not rerun experiments.")
+            self.save()
+            return
         repair_partial_json()
         self.state["status"] = "verifying_teacher" if one_batch else "running"
         self.save()

@@ -153,3 +153,21 @@ def test_single_supervisor_preserves_adopted_running_worker(tmp_path, monkeypatc
     monkeypatch.setattr(sup.time, "sleep", sleep)
     runner.run()
     assert runner.state["status"] == "paused_by_user"
+
+
+def test_completed_study_does_not_regenerate_reports_or_workers(tmp_path, monkeypatch):
+    for name in ("PRIVATE", "QUEUE", "CACHE", "RESULTS"):
+        path = tmp_path / name
+        path.mkdir()
+        monkeypatch.setattr(sup, name, path)
+    monkeypatch.setattr(sup, "codex_command", lambda: ["fake-codex"])
+    runner = sup.Supervisor()
+    for seed in (0, 1, 2):
+        for arm in ("real_fewshot", "classroom", "bulk"):
+            (sup.RESULTS / f"{arm}_seed{seed}.json").write_text("{}")
+    runner.state["status"] = "results_complete"
+    nudges = []
+    monkeypatch.setattr(runner, "nudge", lambda text: nudges.append(text))
+    monkeypatch.setattr(sup.subprocess, "run", lambda *a, **k: pytest.fail("completed study launched another command"))
+    runner.run()
+    assert nudges and runner.state["status"] == "results_complete"

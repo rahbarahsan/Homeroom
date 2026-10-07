@@ -77,7 +77,7 @@ publication work are complete.
 
 ## Validation before the long run
 
-- 40 tests passed, including atomic writes, model checkpoint replay, corrupt
+- 41 tests passed, including atomic writes, model checkpoint replay, corrupt
   checkpoint preservation, quota scheduling, credential-variable filtering,
   reused PID protection, explicit pause, and avoiding duplicate GPU workers.
 - A live five-request Luna lesson batch passed the unattended route. Its
