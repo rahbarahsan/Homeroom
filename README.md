@@ -7,10 +7,36 @@ synthetic data. A teacher model builds an exam, diagnoses a student's errors,
 and generates targeted training examples. Every teacher request passes through
 a budget check, cache, and cost ledger.
 
-The question is practical: **at the same teacher spend, does feedback produce a
-better specialist?**
+The research goal is to help a small model learn reusable rules from limited
+examples, with a teacher guiding what it learns. We measure accuracy, transfer
+to unseen cases, and the full cost of teaching and running the student.
 
-## Current results
+**Research status:** the current recipes have not established a teaching advantage.
+Completed results and their limitations are published below.
+
+## Learning reusable rules
+
+A controlled policy study asks whether a small model can learn five rules from
+48 examples and apply them when several rules hold at once. Two Qwen3-0.6B
+students receive the same 240 Boolean labels: one predicts five judgments together,
+and the other answers five separate questions.
+
+| Complete rule vectors | Joint output | Separate questions |
+|---|---:|---:|
+| Training cases | 42/48 | 16/48 |
+| Selection cases | 202/476 | 189/476 |
+| Cases with competing rules | **0/112** | **0/112** |
+| Measured model resident time | 9.51 min | 29.57 min |
+
+The joint student predicts only one active rule on every competing-rule case.
+The separate-question student fails to learn four rules even on the training
+examples. All 240 updates and 3,288 responses completed; this is a learning failure
+in the tested recipe. The study uses deterministic teaching labels, one seed and
+one fictional policy, with selection data exposed during development.
+
+Read [the methods, failure analysis and next experiment](docs/component-teaching-study.md).
+
+## Banking77 results
 
 The completed Banking77 comparison uses **GPT-6 Luna**, SetFit + MPNet, ten
 real examples per intent and seeds 0, 1 and 2:
@@ -137,8 +163,12 @@ costs and API-billed costs must be kept separate.
 
 ## Next experiments
 
-- Compare lessons only and remediation using a human-labeled training-only
-  holdout for model selection; record the additional validation labels.
+- Test whether balancing true/false supervision repairs the separate-question
+  student's training failure. Require training mastery before expanded evaluation.
+- Establish transfer across new rule combinations, then replicate across seeds
+  and domains with total teaching and student costs reported.
+- Compare successful teaching recipes against simple learners and matched-budget
+  baselines before claiming a data or cost advantage.
 - Evaluate Laya as an additional decision-model candidate, with an appropriate
   ModernBERT baseline and explicit hardware measurements. This integration is
   planned; current results do not include Laya.
